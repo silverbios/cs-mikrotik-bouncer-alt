@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  bouncer-mikrotik-dev:
+    container_name: bouncer-mikrotik-dev
+    image: bagno.hlds.pl:16000/kaszpir/cs-mikrotik-bouncer/cs-mikrotik-bouncer:dev # TODO change it so it makes with locally built images?
+    env_file: ".env"
+    ports:
+      - 2112:2112/tcp # default metrics port
+      - 40000:40000/tcp # https://ko.build/features/debugging/
+    read_only: true
+    restart: unless-stopped
+
