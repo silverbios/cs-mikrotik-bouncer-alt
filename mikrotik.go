@@ -392,6 +392,12 @@ func (mal *mikrotikAddrList) addToAddressList(listName string, address string, t
 			Msgf("Invalid protocol, valid values are 'ip' or 'ipv6'")
 		return nil
 	}
+	ttlTruncated := "false"
+	if useMaxTTL && ttl > maxTTL {
+		ttl = maxTTL
+		ttlTruncated = "true"
+	}
+	metricTTLTruncated.WithLabelValues(proto, ttlTruncated).Inc()
 
 	log.Debug().
 		Str("func", "addToAddressList").
@@ -410,6 +416,7 @@ func (mal *mikrotikAddrList) addToAddressList(listName string, address string, t
 			Str("list_name", listName).
 			Str("address", address).
 			Str("ttl", ttl.String()).
+			Str("ttl_truncated", ttlTruncated).
 			// Str("comment", comment).
 			Msgf("Failed to add address to adress-list")
 		metricMikrotikCmd.WithLabelValues(proto, "address_list", "add", "error").Inc()
@@ -417,12 +424,14 @@ func (mal *mikrotikAddrList) addToAddressList(listName string, address string, t
 
 	}
 	metricMikrotikCmd.WithLabelValues(proto, "address_list", "add", "success").Inc()
+
 	log.Info().
 		Str("func", "addToAddressList").
 		Str("proto", proto).
 		Str("list_name", listName).
 		Str("address", address).
 		Str("ttl", ttl.String()).
+		Str("ttl_truncated", ttlTruncated).
 		// Str("comment", comment).
 		Msgf("Address added to mikrotik successfully")
 	return nil

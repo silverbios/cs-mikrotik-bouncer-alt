@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"maps"
+	"os"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -12,28 +13,57 @@ import (
 )
 
 var (
-	addressList           string        // mikrotik filter address-list prefix
-	crowdsecBouncerAPIKey string        // crowdsec bouncer API key
-	crowdsecBouncerURL    string        // url to crowdsec lapi
-	crowdsecOrigins       []string      // CORS
-	debugDecisionsMax     int           // max decisions to use when processing, set to low as 3 to enable, default -1, means process everything
-	defaultTTL            time.Duration // default time for items without TTL, this is required to allow automatic list expiry, if usure set it to 1d
-	firewallRuleIdsIPv4   string        // comma separated firewall rule ids for IPv4
-	firewallRuleIdsIPv6   string        // comma separated firewall rule ids for IPv6
-	logLevel              string        // 0=debug, 1=info
-	metricsAddr           string        // prometheus listen address
-	mikrotikHost          string        // address of the mikrotik device
-	password              string
-	timeout               time.Duration
-	useIPV4               bool
-	useIPV6               bool
-	username              string
-	useTLS                bool // use TLS in communication with mikrotik
+	addressList           string   // mikrotik filter address-list prefix
+	crowdsecBouncerAPIKey string   // crowdsec bouncer API key
+	crowdsecBouncerURL    string   // url to crowdsec lapi
+	crowdsecOrigins       []string // CORS
+
+	// use this for coding debug sessions only
+	// max decisions to use when processing,
+	// set to low as 3 to enable, thus limiting number of items processed
+	// default -1, means process everything
+	debugDecisionsMax int
+
+	// default time for items without TTL,
+	// this is required to allow automatic list expiry, if unsure set it to 1d
+	defaultTTL time.Duration
+
+	// default time for items with TTL, this is used to truncate incoming TTL
+	// to specific value to prevent of address-list with addresses
+	// which would expire after few days
+	// default 24h
+	// we assume that we get updates from crowdsec at least once per hour
+	// so 1 day seems reasonable for now
+	maxTTL time.Duration
+
+	// set to true if you want to use maxTTL
+	useMaxTTL bool
+
+	firewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4
+	firewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6
+	logLevel            string // 0=debug, 1=info
+	metricsAddr         string // prometheus listen address
+
+	mikrotikHost string        // address of the mikrotik device
+	password     string        // mikrotik api password
+	timeout      time.Duration //mikrotik command timeout duration
+	useIPV4      bool          // set to true to process IPv4 addresses
+	useIPV6      bool          // set to true to process IPv6 addresses
+	username     string        // mikrotik api username
+	useTLS       bool          // use TLS in communication with mikrotik
 )
 
 func initConfig() {
 
 	// TODO: allow loading config from file, because using env vars is insecure
+
+	viper.BindEnv("log_format_json")
+	viper.SetDefault("log_format_json", "true")
+	logToJson := viper.GetBool("log_format_json")
+	if !logToJson {
+		// color console log
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	}
 
 	viper.BindEnv("log_level")
 	viper.SetDefault("log_level", "1")
@@ -42,8 +72,8 @@ func initConfig() {
 	if err != nil {
 		log.Fatal().
 			Err(err).
-			Str("func", "config").
-			Msg("invalid log level")
+			Str("func", "config"). //TODO: use zerolog stacktrace which also uses func=
+			Msg("invalid log_level")
 	}
 	zerolog.SetGlobalLevel(level)
 
@@ -112,18 +142,15 @@ func initConfig() {
 	}
 
 	viper.SetDefault("mikrotik_timeout", "10s")
-	timeout = viper.GetDuration("mikrotik_timeout")
-	timeoutStr, err := time.ParseDuration(timeout.String())
+	timeout = viper.GetDuration("mikrotik_timeout") // TODO: clean up viper.GetDuration
+	timeoutD, err := time.ParseDuration(timeout.String())
 	if err != nil {
 		log.Fatal().
 			Err(err).
 			Str("func", "config").
-			Str("mikrotik_timeout", timeout.String()).
+			Str("mikrotik_timeout", viper.GetString("mikrotik_timeout")).
 			Msg("Failed to parse mikrotik_timeout")
 	}
-
-	viper.BindEnv("crowdsec_origins")
-	viper.SetDefault("crowdsec_origins", nil)
 
 	viper.BindEnv("crowdsec_bouncer_api_key")
 	viper.BindEnv("crowdsec_url")
@@ -141,6 +168,8 @@ func initConfig() {
 			Msg("Crowdsec LAPI URL is not set")
 	}
 
+	viper.BindEnv("crowdsec_origins")
+	viper.SetDefault("crowdsec_origins", nil)
 	crowdsecOrigins = viper.GetStringSlice("crowdsec_origins")
 
 	viper.BindEnv("default_ttl")
@@ -151,8 +180,24 @@ func initConfig() {
 		log.Fatal().
 			Err(err).
 			Str("func", "config").
-			Str("default_ttl", defaultTTL.String()).
+			Str("default_ttl", viper.GetString("default_ttl")).
 			Msg("Failed to parse default_ttl")
+	}
+
+	viper.BindEnv("use_max_ttl")
+	viper.SetDefault("use_max_ttl", "false")
+	useMaxTTL = viper.GetBool("use_max_ttl")
+
+	viper.BindEnv("default_ttl_max")
+	viper.SetDefault("default_ttl_max", "24h")
+	maxTTL = viper.GetDuration("default_ttl_max")
+	maxTTLD, err := time.ParseDuration(maxTTL.String())
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Str("func", "config").
+			Str("default_ttl_max", viper.GetString("default_ttl_max")).
+			Msg("Failed to parse default_ttl_max")
 	}
 
 	all := viper.AllSettings()
@@ -170,6 +215,9 @@ func initConfig() {
 		Msgf("Setting default TTL to %v", defaultTTLD)
 	log.Info().
 		Str("func", "config").
-		Msgf("Setting mikrotik_timeout to %v", timeoutStr)
+		Msgf("Setting max TTL to %v", maxTTLD)
+	log.Info().
+		Str("func", "config").
+		Msgf("Setting mikrotik_timeout to %v", timeoutD)
 
 }

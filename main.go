@@ -48,6 +48,12 @@ var (
 	},
 		[]string{"proto", "func", "operation"},
 	)
+	metricTTLTruncated = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "truncated_ttl_total",
+		Help: "Total number of decisions processed which had effective ttl set to default_ttl_max",
+	},
+		[]string{"proto", "truncated"},
+	)
 	metricMikrotikCmd = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "mikrotik_cmd_total",
 		Help: "Total number of commands executed in mikrotik",
@@ -59,7 +65,6 @@ var (
 func main() {
 
 	// zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	// log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}) // color console log
 
 	initConfig()
 
