@@ -44,20 +44,18 @@ For IPv6 - create IPv6 'drop' filter rules in `input` and `forward`
 chain with the source address list set to `crowdsec` at the top or just before
 generic packet counter rule.
 
-Below are snippets to use, make sure to replace `your-wan-interface`,
-assuming that rule 0 is a dummy passthrough for packet counting added by default
-to mikrotik
+Below are snippets to use, make sure to replace `ether1` with your desired interface:
 
 ```shell
 /ipv6 firewall filter \
 add action=drop src-address-list=crowdsec chain=input \
-  in-interface=your-wan-interface \
-  place-after=0 comment="crowdsec input drop rules"
+in-interface=ether1 \
+place-before=0 comment="crowdsec input drop rules"
 
 /ipv6 firewall filter \
 add action=drop src-address-list=crowdsec chain=forward \
-  in-interface=your-wan-interface \
-  place-after=0 comment="crowdsec forward drop rules"
+in-interface=ether1 \
+place-before=0 comment="crowdsec forward drop rules"
 
 ```
 
@@ -67,31 +65,31 @@ For IPv4 - create IP 'drop' filter rules in `input` and `forward` chain with the
 source address list set to `crowdsec` at the top or just before
 generic packet counter rule.
 
-Below are snippets to use, make sure to replace `your-wan-interface`,
+Below are snippets to use, make sure to replace `ether1` with your desired interface,
 assuming that rule 0 is a dummy passthrough for packet counting added by default
-to mikrotik
+to mikrotik, and rule 1 is whatever but we want to insert crowdsec before it:
 
 ```shell
 /ip firewall filter \
 add action=drop src-address-list=crowdsec chain=input \
-  in-interface=your-wan-interface \
-  place-after=0 comment="crowdsec input drop rules"
+in-interface=ether1 \
+place-before=1 comment="crowdsec input drop rules"
 
 /ip firewall filter \
 add action=drop src-address-list=crowdsec chain=forward \
-  in-interface=your-wan-interface \
-  place-after=0 comment="crowdsec forward drop rules"
+in-interface=ether1 \
+place-before=1 comment="crowdsec forward drop rules"
 
 ```
 
 ### List firewall rules
 
-Get the list of firewall rules, this will be needed later.
+Get the list of firewall rules which were added, this will be needed later.
 
 ```shell
-/ip firewall filter print short
+/ip firewall filter print without-paging
 
-/ipv6 firewall filter print short
+/ipv6 firewall filter print without-paging
 ```
 
 ### Prepare config for the app
@@ -282,9 +280,18 @@ docker-compose up
 
 ## TODO
 
+- double chec if there is an error after adding addres, then if we try to
+  update fw rule to new list - this is bad and bad
+  - if change to new list then it may be truncated ( missing entries)
+  - if we keep to old list then things can expire
+- periodically ask mikrotik for `ip firewall address-list count-only` and make
+  metric from it?
 - add grafana dashboard
+- k8s manifests
 - [ko local](https://ko.build/configuration/)
   or `docker run -p 2112:2112 $(ko build ./cmd/app)` etc
 - ko release fix in github action to push to quay
 - maybe mkdocs + gh pages?
 - graceful shutdown
+
+- panic on no route to host in docker-compose up :D
