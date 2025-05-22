@@ -116,6 +116,7 @@ func (mal *mikrotikAddrList) add(decision *models.Decision) {
 		address += "/128"
 	}
 
+	// TODO: allow formatting comment for decision
 	comment := fmt.Sprintf("%s %s %s", *decision.Origin, *decision.Scenario, *decision.Scope)
 
 	var item = &ttlcache.Item[string, string]{}
@@ -248,7 +249,7 @@ func (mal *mikrotikAddrList) decisionProcess(streamDecision *models.DecisionsStr
 	}
 
 	if (decisionsDeleted + decisionsAdded) > 0 {
-
+		// TODO: allow defining custom format of target address-list name
 		listName := fmt.Sprintf("%s_%s", addressList, time.Now().UTC().Format("2006-01-02_15-04-05"))
 		var err error
 		var conn *routeros.Client
@@ -286,11 +287,6 @@ func (mal *mikrotikAddrList) decisionProcess(streamDecision *models.DecisionsStr
 				Str("list_name", listName).
 				Msgf("Skipping setAddressListInFilter, because IPv6 support is disabled")
 		}
-
-		// err = mikrotikClose(mal.c)
-		// if err != nil {
-		// 	return
-		// }
 
 	}
 }
@@ -401,7 +397,7 @@ func (mal *mikrotikAddrList) addToAddressList(listName string, address string, t
 
 	log.Debug().
 		Str("func", "addToAddressList").
-		Msgf("mikrotik: /%s/firewall/address-list/add list=%s address=%s comment='%s' timeout=%s", proto, listName, address, comment, ttl)
+		Msgf("mikrotik: /%s firewall address-list add list=%s address=%s comment='%s' timeout=%s", proto, listName, address, comment, ttl)
 
 	cmd := fmt.Sprintf("/%s/firewall/address-list/add#=list=%s#=address=%s#=comment=%s#=timeout=%s", proto, listName, address, comment, ttl)
 
@@ -459,7 +455,7 @@ func (mal *mikrotikAddrList) setAddressListInFilter(proto string, listName strin
 		Str("proto", proto).
 		Str("src-address-list", listName).
 		Str("number", firewallRuleIds).
-		Msgf("mikrotik: /%s/firewall/filter/set src-address-list=%s number=%s", proto, listName, firewallRuleIds)
+		Msgf("mikrotik: /%s firewall filter set src-address-list=%s number=%s", proto, listName, firewallRuleIds)
 
 	cmd := fmt.Sprintf("/%s/firewall/filter/set#=src-address-list=%s#=.id=%s", proto, listName, firewallRuleIds)
 

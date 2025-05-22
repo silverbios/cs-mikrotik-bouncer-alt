@@ -12,5 +12,3 @@ services:
     privileged: false
     cap_drop:
       - ALL
-    cap_add:
-    - NET_ADMIN

@@ -64,8 +64,6 @@ var (
 
 func main() {
 
-	// zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
 	initConfig()
 
 	// prometheus metrics
@@ -102,10 +100,6 @@ func main() {
 	)
 	go mal.cache.Start() // starts automatic expired item deletion
 	go recordMetrics(&mal)
-
-	// mal.initMikrotik() //initialize connection to mikrotik and fetch the current access-list entries
-
-	// defer mal.c.Close()
 
 	g, ctx := errgroup.WithContext(context.Background())
 
