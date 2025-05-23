@@ -1,12 +1,67 @@
-# CrowdSec Mikrotik Bouncer
+# CrowdSec MikroTik Bouncer
 
-A fork of CrowdSec Bouncer for MikroTik RouterOS appliance.
+A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by funkolabs.
+
+Notice it works differently, some elements are common in the config, but
+make sure to read carefully this readme file for more details.
+
+## Differences
+
+Funkolabs version tries to dynamically update addresses in address lists on the
+MikroTik device. This has some disadvantages:
+
+- it fetches addresses from a single address-list from the routers,
+  then used it as as cache, meanwhile it was also listening to the decisions
+  from the CrowdSec LAPI, and then tries to update the addresses in the MikroTik.
+  So generally bouncer was doing a diff between upstream and MikroTik device,
+  which is complex
+- When doing a diff using `ip address find` on the MikroTik is slow,
+  on certain devices is **VERY** slow, making noticeable load on the CPU of the device
+- above caused that some devices were not blocking addresses fast enough,
+  or some addresses were not blocked at all.
+- some people mitigated it with scheduled app restarts after few hours,
+  effectively making cache not really useful.
+- in addition it kept constant connections to the MikroTik device, I am not sure
+  how it handled network errors - maybe crashes in containers helped it to
+  auto recover :)
+
+This fork works differently:
+
+- listen for the decisions from Crowdsec LAPI and compare it with local cache,
+  there is no need to fetch addresses from the MikroTik device at all
+- if there are differences between the cache such as add/delete then process the
+  addresses - and only then connect to the MikroTik device
+- add address to a **NEW** address-list on the MikroTik,
+  optionally prior inserting the address shorten expiry time to desired value
+  to say 4h ( I named that as `truncate`) .
+- if there were no errors then alter specific existing firewall rules to use
+  that new address-list - the swap is quick and atomic
+
+This way a new list it created on MikroTik device with addresses with updated
+timeout values.
+
+The old list will auto-expire after certain time, so it's good if this is short
+living one say 4h - default basic CrowdSec configuration updates addresses
+at least once per hour.
+
+## Features
+
+- set max time for ip address blocking - new decision comes in for 6 days,
+  but this tool changes it to a series of update 4h bans in MikroTik
+- faster operation, especially on older devices
+- you can test it without affecting existing setup - creates new address-lists
+  and updates specific firewall rules which can be disabled, thus easy to
+  migrate from old to a new setup without breaking old configuration
+- detailed messages in log, optionally plain text messages
+- option to limit incoming decisions to desired value such as 2, to make it
+  easier to test setups prior production
+- prometheus metrics
 
 # Description
 
 This repository aim to implement a [CrowdSec](https://doc.crowdsec.net/) bouncer
-for the router [Mikrotik](https://mikrotik.com) to block malicious IP to access your services.
-For this it leverages [Mikrotik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
+for the router [MikroTik](https://mikrotik.com) to block malicious IP to access your services.
+For this it leverages [MikroTik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
 
 For now, this service is mainly fought to be used in debug mode executed locally
 or as a container.
@@ -15,22 +70,22 @@ or section below.
 
 ## Prerequisites
 
-You should have a Mikrotik appliance and a CrowdSec instance running.
+You should have a MikroTik appliance and a CrowdSec instance running.
 The container is available as docker image `quay.io/kaszpir/cs-mikrotik-bouncer`.
-It must have access to CrowdSec and to Mikrotik.
+It must have access to CrowdSec and to MikroTik.
 
 # Configuration
 
 Read below instructions below doing anything.
-First we configure mikrotik device by adding firewall rules.
-Then we create a bouncer in crowdsec.
+First we configure MikroTik device by adding firewall rules.
+Then we create a bouncer in CrowdSec.
 After that prepare config for the bouncer and start the app or container.
 
-## Mikrotik config
+## MikroTik config
 
-### Mikrotik user
+### MikroTik user
 
-Add user to mikrotik to allow access via RouterOS API.
+Add user to MikroTik to allow access via RouterOS API.
 
 ```shell
 /user add name=crowdsec-bouncer-user password=hunter2 group=full disabled=no
@@ -67,7 +122,7 @@ generic packet counter rule.
 
 Below are snippets to use, make sure to replace `ether1` with your desired interface,
 assuming that rule 0 is a dummy passthrough for packet counting added by default
-to mikrotik, and rule 1 is whatever but we want to insert crowdsec before it:
+to MikroTik, and rule 1 is whatever but we want to insert CrowdSec before it:
 
 ```shell
 /ip firewall filter \
@@ -106,7 +161,7 @@ cscli bouncers add mikrotik-bouncer
 Copy the API key printed. You **WILL NOT** be able the get it again.
 Paste this API key as the value for bouncer environment variable `CROWDSEC_BOUNCER_API_KEY`
 
-Adjust other variables in .env file as needed, especially host to Mikrotik
+Adjust other variables in .env file as needed, especially host to MikroTik
 device and CrowdSec endpoint. See section below.
 
 ### Run the app
@@ -139,7 +194,7 @@ The bouncer configuration is made via environment variables:
   with key=value, useful only in certain debug sessions
 
 - `MIKROTIK_HOST` - default value: ``, required,
-  Mikrotik device address to access RouterOS API ( `ip:port`)
+  MikroTik device address to access RouterOS API ( `ip:port`)
 
 - `MIKROTIK_USER` - default value: ``, required,
   Mikrotik device username to access RouterOS API
@@ -148,7 +203,7 @@ The bouncer configuration is made via environment variables:
   Mikrotik device password to access RouterOS API
 
 - `MIKROTIK_TLS` -  default value: `true`, optional,
-  User TLS to connect to Mikrotik API,
+  User TLS to connect to MikroTik API,
 
 - `MIKROTIK_IPV4` - default value: `true`, optional,
   IPv4 support, set to `true` to enable processing IPv4 blocklists
@@ -165,13 +220,13 @@ The bouncer configuration is made via environment variables:
   those are created during configuration , for example `3,4` (input,forward)
 
 - `MIKROTIK_ADDRESS_LIST` - default value: `crowdsec`, optional,
-  prefix for target address-list in mikrotik device, no special chars,
+  prefix for target address-list in MikroTik device, no special chars,
   no spaces etc, generated name will be with a timestamp suffix,
   if you set it to `crowdsec` then access-list will be named as
   `crowdsec_2025-05-19_15-01-09` or something like it (UTC),
 
 - `MIKROTIK_TIMEOUT` - default value: `10s`, optional,
-  set timeout when trying to connect to the mikrotik,
+  set timeout when trying to connect to the MikroTik,
   recommended to keep it under `60s`
 
 - `DEFAULT_TTL` - default value: `1h`, optional,
@@ -190,7 +245,7 @@ The bouncer configuration is made via environment variables:
   For example new decision comes in, and address should be banned for 4 days,
   but `DEFAULT_TTL_MAX=4h` will make it to be added with `timeout=4h`.
   Notice that the original 4 day ban will be respected in the application cache
-  or from incoming CrowdSec decisions, but on mikrotik it will have 4h.
+  or from incoming CrowdSec decisions, but on MikroTik it will have 4h.
 
   Yet it is good to quickly expire old address-lists automatically, because
   new ones will come in with refreshed entries for the same address ips to block.
@@ -199,7 +254,7 @@ The bouncer configuration is made via environment variables:
   will be readded to the new list every hour until expires.
 
   This helps to avoid having thousands addresses in hundrets address-lists in
-  the mikrotik.
+  the MikroTik.
 
   Recommended value is at least 3x longer than the frequency you get updates from
   the CrowdSec, so on basic setup 4h should be sufficient. For locations with
@@ -223,8 +278,8 @@ If running locally see [http://127.0.0.1:2112/metrics](http://127.0.0.1:2112/met
 Some metrics appear after a while.
 Most important ones:
 
-- `mikrotik_cmd_total{result="error"}` - number of errors when trying to communicate with mikrotik
-- `mikrotik_cmd_total{result="success"}` - number of commands succesfully executed on mikrotik
+- `mikrotik_cmd_total{result="error"}` - number of errors when trying to communicate with MikroTik
+- `mikrotik_cmd_total{result="success"}` - number of commands succesfully executed on MikroTik
 - `decisions_total{}` - processed incoming CrowdSec decisions to block/unblock addresses
 - `truncated_ttl_total{}` - number of ban truncated because they were too long
 
@@ -261,7 +316,7 @@ ko build -B -t dev --platform=linux/amd64
 docker-compose up
 ```
 
-## Other Mikrotik commands
+## Other MikroTik commands
 
 ```shell
 /ip firewall address-list remove [find where list="crowdsec"]
@@ -280,11 +335,11 @@ docker-compose up
 
 ## TODO
 
-- double chec if there is an error after adding addres, then if we try to
+- double check if there is an error after adding address, then if we try to
   update fw rule to new list - this is bad and bad
   - if change to new list then it may be truncated ( missing entries)
   - if we keep to old list then things can expire
-- periodically ask mikrotik for `ip firewall address-list count-only` and make
+- periodically ask MikroTik for `ip firewall address-list count-only` and make
   metric from it?
 - add grafana dashboard
 - k8s manifests
