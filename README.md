@@ -1,6 +1,10 @@
 # CrowdSec MikroTik Bouncer
 
-A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by funkolabs.
+This repository aim to implement a [CrowdSec](https://doc.crowdsec.net/) bouncer
+for the router [MikroTik](https://mikrotik.com) to block malicious IP to access your services.
+For this it leverages [MikroTik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
+
+A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by [funkolabs](https://github.com/funkolab/cs-mikrotik-bouncer).
 
 Notice it works differently, some elements are common in the config, but
 make sure to read carefully this readme file for more details.
@@ -11,26 +15,29 @@ Funkolabs version tries to dynamically update addresses in address lists on the
 MikroTik device. This has some disadvantages:
 
 - it fetches addresses from a single address-list from the routers,
-  then used it as as cache, meanwhile it was also listening to the decisions
+  then used it as cache, meanwhile it was also listening to the decisions
   from the CrowdSec LAPI, and then tries to update the addresses in the MikroTik.
   So generally bouncer was doing a diff between upstream and MikroTik device,
   which is complex
-- When doing a diff using `ip address find` on the MikroTik is slow,
-  on certain devices is **VERY** slow, making noticeable load on the CPU of the device
+- Doing `ip address find` on the MikroTik is slow, on certain devices this is
+  **VERY** slow, making noticeable load on the CPU of the device
 - above caused that some devices were not blocking addresses fast enough,
-  or some addresses were not blocked at all.
+  or some addresses were not blocked at all, thus the diff process was
+  lagging behind the main update loop until there was a noticeable desynch
 - some people mitigated it with scheduled app restarts after few hours,
-  effectively making cache not really useful.
+  effectively making cache not really useful
 - in addition it kept constant connections to the MikroTik device, I am not sure
   how it handled network errors - maybe crashes in containers helped it to
   auto recover :)
 
 This fork works differently:
 
+- there is no need to fetch addresses from the MikroTik device at all
 - listen for the decisions from Crowdsec LAPI and compare it with local cache,
-  there is no need to fetch addresses from the MikroTik device at all
-- if there are differences between the cache such as add/delete then process the
-  addresses - and only then connect to the MikroTik device
+- if there are differences between the cache such as add/delete/update
+  then process the addresses
+- in separate loop walk over addresses in local cache,
+  and only then connect to the MikroTik device
 - add address to a **NEW** address-list on the MikroTik,
   optionally prior inserting the address shorten expiry time to desired value
   to say 4h ( I named that as `truncate`) .
@@ -68,15 +75,11 @@ at least once per hour.
   and adding multi-device support is not planned due to the complexity.
   Just run separate app instances with different configs - this way you can
   much more easily test new configs on the same or different devices.
+  The app eats very low amount of resources (about 10 miliCore/24MB in peak)
 
-# Description
+## Running
 
-This repository aim to implement a [CrowdSec](https://doc.crowdsec.net/) bouncer
-for the router [MikroTik](https://mikrotik.com) to block malicious IP to access your services.
-For this it leverages [MikroTik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
-
-For now, this service is mainly fought to be used in debug mode executed locally
-or as a container.
+For now, this service is mainly fought to be used in as an app in a container.
 If you need to build from source, you can get some inspiration from the Makefile
 or section below.
 
