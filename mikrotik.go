@@ -408,6 +408,18 @@ func (mal *mikrotikAddrList) addToAddressList(listName string, address string, t
 			Msgf("Invalid protocol, valid values are 'ip' or 'ipv6'")
 		return nil
 	}
+
+	if ttl == 0*time.Second {
+		newTTL := 2 * updateFreq
+		log.Info().
+			Str("func", "addToAddressList").
+			Str("ttl", ttl.String()).
+			Str("ttl_updated", newTTL.String()).
+			Msgf("Ban without TTL converted to expiring ban")
+		metricPermBans.WithLabelValues(proto).Inc()
+		ttl = newTTL
+	}
+
 	ttlTruncated := "false"
 	if useMaxTTL && ttl > maxTTL {
 		ttl = maxTTL

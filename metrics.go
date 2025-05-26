@@ -35,6 +35,13 @@ var (
 	},
 		[]string{"proto", "truncated"},
 	)
+	metricPermBans = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "permban_total",
+		Help: "Total number of decisions without ttl",
+	},
+		[]string{"proto"},
+	)
+
 	metricMikrotikCmd = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "mikrotik_cmd_total",
 		Help: "Total number of commands executed in mikrotik",
