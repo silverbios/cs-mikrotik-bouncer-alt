@@ -20,6 +20,67 @@ func dial() (*routeros.Client, error) {
 	return routeros.DialTimeout(mikrotikHost, username, password, timeout)
 }
 
+// runMikrotikCommands is a loop which walks over the cached address list
+// and adds addresses to ne address-list  in mikrotik
+// and updates firewall rules to use that new address list
+//
+// we need it to be executed periodically to ensure that if we use default_ttl_max
+// then we readd address prior expiry
+func runMikrotikCommands(mal *mikrotikAddrList) {
+	go func() {
+		for {
+
+			// on app start and cache items is empty, wait 10 seconds for an update
+			// usually decisions are initiated under 5s on initial connect
+			if len(mal.cache.Items()) == 0 {
+				time.Sleep(10 * time.Second)
+			}
+
+			// TODO: allow defining custom format of target address-list name
+			listName := fmt.Sprintf("%s_%s", addressList, time.Now().UTC().Format("2006-01-02_15-04-05"))
+			var err error
+			var conn *routeros.Client
+			conn, err = mikrotikConnect()
+			if err != nil {
+				return
+			}
+			mal.c = conn
+			defer mikrotikClose(mal.c)
+			for _, item := range mal.cache.Items() {
+				address := item.Key()
+				ttl := item.TTL()
+				comment := item.Value()
+				err := mal.addToAddressList(listName, address, ttl, comment)
+				if err != nil {
+					return
+				}
+			}
+
+			if useIPV4 {
+				err = mal.setAddressListInFilter("ip", listName, firewallRuleIdsIPv4)
+
+			} else {
+				log.Debug().
+					Str("func", "runMikrotikCommands").
+					Str("list_name", listName).
+					Msgf("Skipping setAddressListInFilter, because IPv4 support is disabled")
+			}
+
+			if useIPV6 {
+				err = mal.setAddressListInFilter("ipv6", listName, firewallRuleIdsIPv6)
+			} else {
+				log.Debug().
+					Str("func", "runMikrotikCommands").
+					Str("list_name", listName).
+					Msgf("Skipping setAddressListInFilter, because IPv6 support is disabled")
+			}
+
+			time.Sleep(updateFreq)
+
+		}
+	}()
+}
+
 func mikrotikConnect() (*routeros.Client, error) {
 
 	log.Info().
@@ -248,47 +309,6 @@ func (mal *mikrotikAddrList) decisionProcess(streamDecision *models.DecisionsStr
 		}
 	}
 
-	if (decisionsDeleted + decisionsAdded) > 0 {
-		// TODO: allow defining custom format of target address-list name
-		listName := fmt.Sprintf("%s_%s", addressList, time.Now().UTC().Format("2006-01-02_15-04-05"))
-		var err error
-		var conn *routeros.Client
-		conn, err = mikrotikConnect()
-		if err != nil {
-			return
-		}
-		mal.c = conn
-		defer mikrotikClose(mal.c)
-		for _, item := range mal.cache.Items() {
-			address := item.Key()
-			ttl := item.TTL()
-			comment := item.Value()
-			err := mal.addToAddressList(listName, address, ttl, comment)
-			if err != nil {
-				return
-			}
-		}
-
-		if useIPV4 {
-			err = mal.setAddressListInFilter("ip", listName, firewallRuleIdsIPv4)
-
-		} else {
-			log.Debug().
-				Str("func", "decisionProcess").
-				Str("list_name", listName).
-				Msgf("Skipping setAddressListInFilter, because IPv4 support is disabled")
-		}
-
-		if useIPV6 {
-			err = mal.setAddressListInFilter("ipv6", listName, firewallRuleIdsIPv6)
-		} else {
-			log.Debug().
-				Str("func", "decisionProcess").
-				Str("list_name", listName).
-				Msgf("Skipping setAddressListInFilter, because IPv6 support is disabled")
-		}
-
-	}
 }
 
 // setTTL parses input time string

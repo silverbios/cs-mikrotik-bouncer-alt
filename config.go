@@ -51,6 +51,9 @@ var (
 	useIPV6      bool          // set to true to process IPv6 addresses
 	username     string        // mikrotik api username
 	useTLS       bool          // use TLS in communication with mikrotik
+
+	//mikrotik update frequency to process create new address list and update firewall
+	updateFreq time.Duration
 )
 
 func initConfig() {
@@ -141,6 +144,7 @@ func initConfig() {
 			Msg("ipv6_firewall_rules cannot be empty")
 	}
 
+	viper.BindEnv("mikrotik_timeout")
 	viper.SetDefault("mikrotik_timeout", "10s")
 	timeout = viper.GetDuration("mikrotik_timeout") // TODO: clean up viper.GetDuration
 	timeoutD, err := time.ParseDuration(timeout.String())
@@ -152,15 +156,30 @@ func initConfig() {
 			Msg("Failed to parse mikrotik_timeout")
 	}
 
-	viper.BindEnv("crowdsec_bouncer_api_key")
+	viper.BindEnv("mikrotik_update_frequency")
+	viper.SetDefault("mikrotik_update_frequency", "1h")
+	updateFreq = viper.GetDuration("mikrotik_update_frequency") // TODO: clean up viper.GetDuration
+	updateFreqD, err := time.ParseDuration(updateFreq.String())
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Str("func", "config").
+			Str("mikrotik_update_frequency", viper.GetString("mikrotik_update_frequency")).
+			Msg("Failed to parse mikrotik_update_frequency")
+	}
+
 	viper.BindEnv("crowdsec_url")
 	viper.SetDefault("crowdsec_url", "http://crowdsec:8080/")
+
+	viper.BindEnv("crowdsec_bouncer_api_key")
 	crowdsecBouncerAPIKey = viper.GetString("crowdsec_bouncer_api_key")
 	if crowdsecBouncerAPIKey == "" {
 		log.Fatal().
 			Str("func", "config").
 			Msg("Crowdsec API key is not set")
 	}
+
+	viper.BindEnv("crowdsec_url")
 	crowdsecBouncerURL = viper.GetString("crowdsec_url")
 	if crowdsecBouncerURL == "" {
 		log.Fatal().
@@ -199,6 +218,14 @@ func initConfig() {
 			Str("default_ttl_max", viper.GetString("default_ttl_max")).
 			Msg("Failed to parse default_ttl_max")
 	}
+	if maxTTL < updateFreq {
+		log.Fatal().
+			Err(err).
+			Str("func", "config").
+			Str("default_ttl_max", viper.GetString("default_ttl_max")).
+			Str("mikrotik_update_frequency", viper.GetString("mikrotik_update_frequency")).
+			Msg("default_ttl_max can not be shorter than mikrotik_update_frequency")
+	}
 
 	all := viper.AllSettings()
 
@@ -219,5 +246,8 @@ func initConfig() {
 	log.Info().
 		Str("func", "config").
 		Msgf("Setting mikrotik_timeout to %v", timeoutD)
+	log.Info().
+		Str("func", "config").
+		Msgf("Setting mikrotik_update_requency to %v", updateFreqD)
 
 }

@@ -55,7 +55,19 @@ at least once per hour.
 - detailed messages in log, optionally plain text messages
 - option to limit incoming decisions to desired value such as 2, to make it
   easier to test setups prior production
+- separate loop to fetch decisions from the CrowdSec LAPI, which inserts
+  addresses to the local cache
+- separate loop to process addresses in the local cache and convert it to the
+  commands to create new MikroTik address-list and firewall update command
+  to use that newly created address-list
 - prometheus metrics
+
+## Known limitations
+
+- code executes commands against single MikroTik device, this is by design,
+  and adding multi-device support is not planned due to the complexity.
+  Just run separate app instances with different configs - this way you can
+  much more easily test new configs on the same or different devices.
 
 # Description
 
@@ -229,10 +241,12 @@ The bouncer configuration is made via environment variables:
   set timeout when trying to connect to the MikroTik,
   recommended to keep it under `60s`
 
-- `DEFAULT_TTL` - default value: `1h`, optional,
-  Set default Time-To-Live for address if not provided,
-  mainly needed to avoid getting extremely long dynamic and
-  non-expiring firewall address-lists, and addresses without expiry
+- `MIKROTIK_TIMEOUT` - default value: `10s`, optional,
+  set timeout when trying to connect to the MikroTik,
+  recommended to keep it under `60s`
+
+- `MIKROTIK_UPDATE_FREQUENCY` - default value: `1h`, optional,
+  Set default frequency to update MikroTik address-lists and firewall rules.
 
 - `USE_MAX_TTL` - default value: `false`, optional,
   Set to `true` if you want to truncate timeout for the address in address-list
@@ -261,6 +275,8 @@ The bouncer configuration is made via environment variables:
   possible network disruptions 8h or 16 would be recommended.
 
   For weaker/older devices it may be better to keep it really low like 2h.
+
+  Must be longer than `MIKROTIK_UPDATE_FREQUENCY`.
 
 - `GOMAXPROCS` - default value: `` (automatic number of processors), optional,
   Set default processes to use by golang app, especially useful to prevent it
