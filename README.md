@@ -232,7 +232,7 @@ The bouncer configuration is made via environment variables:
 
 - `IPV6_FIREWALL_RULES` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
   comma separated numbers of IPv6 firewall rules to update on access-list change,
-  those are created during configuration , for example `3,4` (input,forward)
+  those are created during configuration , for example `0,1` (input,forward)
 
 - `MIKROTIK_ADDRESS_LIST` - default value: `crowdsec`, optional,
   prefix for target address-list in MikroTik device, no special chars,
