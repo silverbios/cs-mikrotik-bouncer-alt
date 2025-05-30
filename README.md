@@ -124,6 +124,23 @@ at least once per hour.
   much more easily test new configs on the same or different devices.
   The app eats very low amount of resources (about 10 miliCore/24MB in peak)
 
+### TODO
+
+- double check if there is an error after adding address, then if we try to
+  update fw rule to new list:
+  - if change to new list then it may be truncated ( missing entries)
+  - if we keep to old list or dont add new list, then things can expire
+- periodically ask MikroTik for `ip firewall address-list count-only` and make
+  metric from it?
+- add grafana dashboard
+- k8s manifests
+- [ko local](https://ko.build/configuration/)
+  or `docker run -p 2112:2112 $(ko build ./cmd/app)` etc
+- maybe mkdocs + gh pages?
+- graceful shutdown, so that adding addresses and firewall is finished?
+
+- panic on no route to host in docker-compose up :D
+
 ## Running
 
 For now, this service is mainly fought to be used in as an app in a container.
@@ -446,20 +463,3 @@ docker-compose up
 /ipv6 firewall address-list remove [find where list~"^crowdsec.*"]
 
 ```
-
-## TODO
-
-- double check if there is an error after adding address, then if we try to
-  update fw rule to new list:
-  - if change to new list then it may be truncated ( missing entries)
-  - if we keep to old list or dont add new list, then things can expire
-- periodically ask MikroTik for `ip firewall address-list count-only` and make
-  metric from it?
-- add grafana dashboard
-- k8s manifests
-- [ko local](https://ko.build/configuration/)
-  or `docker run -p 2112:2112 $(ko build ./cmd/app)` etc
-- maybe mkdocs + gh pages?
-- graceful shutdown, so that adding addresses and firewall is finished?
-
-- panic on no route to host in docker-compose up :D
