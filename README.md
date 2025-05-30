@@ -9,6 +9,53 @@ A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by [funkolabs](http
 Notice it works differently, some elements are common in the config, but
 make sure to read carefully this readme file for more details.
 
+```mermaid
+sequenceDiagram
+  participant CrowdSec API
+  participant Bouncer
+  participant Mikrotik
+
+  Bouncer ->>+ CrowdSec API: login
+
+  rect rgba(0, 0, 255, .25)
+  loop Cache Update flow
+    CrowdSec API ->>+ Bouncer: get decisions as stream<br/>insert/update/remove item into cache
+  end
+  end
+
+
+  rect rgba(255, 255, 0, .25)
+  loop Cache TTL
+    Bouncer ->>+ Bouncer: auto remove expired items from cache due TTL
+  end
+  end
+
+  rect rgba(255, 0, 0, .25)
+  loop Mikrotik configuration: every 1h
+      Bouncer ->>+ Bouncer: create new address-list name
+      Bouncer ->> Mikrotik: connection open
+
+      loop over each item in the cache
+          Bouncer ->> Mikrotik: insert address to new address-list with ttl 4h
+      end
+      Bouncer ->> Mikrotik: update firewall rule to use new address-list
+      Bouncer ->> Mikrotik: connection close
+  end
+  end
+
+  rect rgba(0, 255, 0, .25)
+  loop Mikrotik address-list lifecycle: every 30s
+    Mikrotik ->>+ Mikrotik: check if address in any address-list should expire
+    Mikrotik ->>+ Mikrotik: if address-list empty then delete address-list
+  end
+  end
+
+  loop Metrics
+    Bouncer ->>+ Bouncer: update TTLCache metrics
+  end
+
+```
+
 ## Differences
 
 Funkolabs version tries to dynamically update addresses in address lists on the
