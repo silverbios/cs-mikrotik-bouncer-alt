@@ -86,13 +86,13 @@ or section below.
 ## Prerequisites
 
 You should have a MikroTik appliance and a CrowdSec instance running.
-The container is available as docker image `quay.io/kaszpir/cs-mikrotik-bouncer`.
-It must have access to CrowdSec and to MikroTik.
+The container is available as docker image under [quay.io/kaszpir/cs-mikrotik-bouncer](quay.io/kaszpir/cs-mikrotik-bouncer).
+The running contaner must have access to CrowdSec and to MikroTik.
 
 # Configuration
 
 Read below instructions below doing anything.
-First we configure MikroTik device by adding firewall rules.
+First we configure MikroTik device by adding user and firewall rules.
 Then we create a bouncer in CrowdSec.
 After that prepare config for the bouncer and start the app or container.
 
@@ -111,8 +111,7 @@ Remember to filter out access for the created user for given address only etc.
 ### IPv6 firewall rules
 
 For IPv6 - create IPv6 'drop' filter rules in `input` and `forward`
-chain with the source address list set to `crowdsec` at the top or just before
-generic packet counter rule.
+chain with the source address list set to `crowdsec` at the top.
 
 Below are snippets to use, make sure to replace `ether1` with your desired interface:
 
@@ -129,9 +128,11 @@ place-before=0 comment="crowdsec forward drop rules"
 
 ```
 
+The best would be to add them just after default `bad_ipv6` rules.
+
 ### IPv4 firewall rules
 
-For IPv4 - create IP 'drop' filter rules in `input` and `forward` chain with the
+For IPv4 - create IP `drop` filter rules in `input` and `forward` chain with the
 source address list set to `crowdsec` at the top or just before
 generic packet counter rule.
 
@@ -161,6 +162,53 @@ Get the list of firewall rules which were added, this will be needed later.
 
 /ipv6 firewall filter print without-paging
 ```
+
+Write down numbers of the rules on the most left column.
+
+For example for IPv4:
+
+```text
+> /ip firewall filter print without-paging
+
+Flags: X - disabled, I - invalid; D - dynamic
+ 0  D ;;; special dummy rule to show fasttrack counters
+      chain=forward action=passthrough
+
+ 1    ;;; crowdsec input drop rules
+      chain=input action=drop src-address-list=crowdsec_2025-05-30_20-03-09 in-interface=ether1
+
+ 2    ;;; crowdsec forward drop rules
+      chain=forward action=drop src-address-list=crowdsec_2025-05-30_20-03-09 in-interface=ether1
+
+ 3    ;;; defconf: accept established,related,untracked
+      chain=input action=accept connection-state=established,related,untracked
+
+ 4    ;;; defconf: drop invalid
+      chain=input action=drop connection-state=invalid
+
+```
+
+then your `IP_FIREWALL_RULES` would be `1,2`.
+
+Similar, for IPv6:
+
+```text
+> /ipv6 firewall filter print without-paging
+Flags: X - disabled, I - invalid; D - dynamic
+ 0    ;;; crowdsec forward drop rules
+      chain=forward action=drop src-address-list=crowdsec_2025-05-29_20-37-42 in-interface=ether1
+
+ 1    ;;; crowdsec input drop rules
+      chain=input action=drop src-address-list=crowdsec_2025-05-29_20-37-42 in-interface=ether1
+
+ 2    ;;; defconf: drop invalid
+      chain=input action=drop connection-state=invalid
+
+ 3    ;;; defconf: accept established,related,untracked
+      chain=input action=accept connection-state=established,related,untracked
+```
+
+then your `IPV6_FIREWALL_RULES` would be `0,1`.
 
 ### Prepare config for the app
 
@@ -355,17 +403,16 @@ docker-compose up
 ## TODO
 
 - double check if there is an error after adding address, then if we try to
-  update fw rule to new list - this is bad and bad
+  update fw rule to new list:
   - if change to new list then it may be truncated ( missing entries)
-  - if we keep to old list then things can expire
+  - if we keep to old list or dont add new list, then things can expire
 - periodically ask MikroTik for `ip firewall address-list count-only` and make
   metric from it?
 - add grafana dashboard
 - k8s manifests
 - [ko local](https://ko.build/configuration/)
   or `docker run -p 2112:2112 $(ko build ./cmd/app)` etc
-- ko release fix in github action to push to quay
 - maybe mkdocs + gh pages?
-- graceful shutdown
+- graceful shutdown, so that adding addresses and firewall is finished?
 
 - panic on no route to host in docker-compose up :D
