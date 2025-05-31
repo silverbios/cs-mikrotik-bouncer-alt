@@ -129,8 +129,6 @@ at least once per hour.
 
 ### TODO
 
-- if  decision "origin" == "cscli", then trigger fw update immediately,
-  this should help with manually added decisions via cslcli decision add ...
 - double check if there is an error after adding address, then if we try to
   update fw rule to new list:
   - if change to new list then it may be truncated ( missing entries)
