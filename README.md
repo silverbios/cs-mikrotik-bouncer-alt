@@ -155,7 +155,7 @@ or section below.
 ## Prerequisites
 
 You should have a MikroTik appliance and a CrowdSec instance running.
-The container is available as docker image under [quay.io/kaszpir/cs-mikrotik-bouncer](quay.io/kaszpir/cs-mikrotik-bouncer).
+The container is available as docker image under [quay.io/kaszpir/cs-mikrotik-bouncer](https://quay.io/kaszpir/cs-mikrotik-bouncer).
 The running contaner must have access to CrowdSec and to MikroTik.
 
 # Configuration
