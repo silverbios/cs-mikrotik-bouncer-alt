@@ -125,7 +125,8 @@ at least once per hour.
   The app eats very low amount of resources (about 10 miliCore/24MB in peak)
 
 - incoming decisions are added to the cache in separate loop than items added
-  to the Mikrotik, so there is a delay between acutal ip ban
+  to the Mikrotik, so there is a an about 10s delay between actual ip ban via
+  csclu and the firwall update on the MikroTik device.
 
 ### TODO
 
