@@ -59,9 +59,9 @@ func main() {
 	mal.cache = ttlcache.New[string, string](
 		ttlcache.WithDisableTouchOnHit[string, string](), // do not update TTL when reading items
 	)
-	go mal.cache.Start()         // starts automatic expired item deletion
-	go recordMetrics(&mal)       // record metrics
-	go runMikrotikCommands(&mal) // process cached addressses and insert htem to mikrotik
+	go mal.cache.Start()             // starts automatic expired item deletion
+	go recordMetrics(&mal)           // record metrics
+	go runMikrotikCommandsLoop(&mal) // process cached addresses and insert them to MikroTik
 
 	g, ctx := errgroup.WithContext(context.Background())
 

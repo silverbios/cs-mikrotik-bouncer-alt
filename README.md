@@ -124,8 +124,13 @@ at least once per hour.
   much more easily test new configs on the same or different devices.
   The app eats very low amount of resources (about 10 miliCore/24MB in peak)
 
+- incoming decisions are added to the cache in separate loop than items added
+  to the Mikrotik, so there is a delay between acutal ip ban
+
 ### TODO
 
+- if  decision "origin" == "cscli", then trigger fw update immediately,
+  this should help with manually added decisions via cslcli decision add ...
 - double check if there is an error after adding address, then if we try to
   update fw rule to new list:
   - if change to new list then it may be truncated ( missing entries)
@@ -392,6 +397,20 @@ The bouncer configuration is made via environment variables:
   For weaker/older devices it may be better to keep it really low like 2h.
 
   Must be longer than `MIKROTIK_UPDATE_FREQUENCY`.
+
+- `UPDATE_ON_CSCSLI` - default value: `true`, optional,
+  if you set it to true, then if incoming CrowdSec API origin is cscsli,
+  then trigger mikrotik address-list and firewall update immediately
+  (well, usually in about 5s).
+
+  This makes ban added from other tools being applied faster, but for the
+  price of creating new address-list and firewall update.
+  Effectively you really want this enabled, and also have `USE_MAX_TTL` set to
+  say 4h for quicker old address expiration.
+
+  If set to `false` then the address will not be banned until the next loop
+  of the `MIKROTIK_UPDATE_FREQUENCY` is executed, so on default settings it may
+  take up to 1h before address is banned.
 
 - `GOMAXPROCS` - default value: `` (automatic number of processors), optional,
   Set default processes to use by golang app, especially useful to prevent it
