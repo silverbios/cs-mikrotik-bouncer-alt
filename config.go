@@ -195,7 +195,7 @@ func initConfig() {
 	crowdsecOrigins = viper.GetStringSlice("crowdsec_origins")
 
 	viper.BindEnv("default_ttl")
-	viper.SetDefault("default_ttl", "1h")
+	viper.SetDefault("default_ttl", "3h")
 	defaultTTL = viper.GetDuration("default_ttl")
 	defaultTTLD, err := time.ParseDuration(defaultTTL.String())
 	if err != nil {
