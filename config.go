@@ -52,9 +52,9 @@ var (
 	username     string        // mikrotik api username
 	useTLS       bool          // use TLS in communication with mikrotik
 
-	// run mikrotik address-list+fw update if incoming
-	// decision origin (cscli reason) is set as 'cscli'
-	updateOnCSCLI bool
+	// run mikrotik address-list+fw update on received decision event
+	// defaults to true if you want faster blocking/unblocking
+	triggerOnUpdate bool
 	//mikrotik update frequency to process create new address list and update firewall
 	updateFreq time.Duration
 )
@@ -230,9 +230,9 @@ func initConfig() {
 			Msg("default_ttl_max can not be shorter than mikrotik_update_frequency")
 	}
 
-	viper.BindEnv("update_on_cscli")
-	viper.SetDefault("update_on_cscli", "true")
-	updateOnCSCLI = viper.GetBool("update_on_cscli")
+	viper.BindEnv("trigger_on_update")
+	viper.SetDefault("trigger_on_update", "true")
+	triggerOnUpdate = viper.GetBool("trigger_on_update")
 
 	all := viper.AllSettings()
 

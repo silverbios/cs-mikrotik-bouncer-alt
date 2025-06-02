@@ -397,9 +397,8 @@ The bouncer configuration is made via environment variables:
 
   Must be longer than `MIKROTIK_UPDATE_FREQUENCY`.
 
-- `UPDATE_ON_CSCSLI` - default value: `true`, optional,
-  if you set it to true, then if incoming CrowdSec API origin is cscsli,
-  then trigger mikrotik address-list and firewall update immediately
+- `TRIGGER_ON_UPDATE` - default value: `true`, optional,
+  if you set it to true, then trigger mikrotik address-list and firewall update immediately
   (well, usually in about 5s).
 
   This makes ban added from other tools being applied faster, but for the

@@ -140,7 +140,7 @@ func mikrotikClose(c *routeros.Client) error {
 	return nil
 }
 
-func (mal *mikrotikAddrList) add(decision *models.Decision) {
+func (mal *mikrotikAddrList) add(decision *models.Decision) bool {
 
 	log.Info().
 		Str("func", "add").
@@ -167,7 +167,7 @@ func (mal *mikrotikAddrList) add(decision *models.Decision) {
 			Str("new_ttl", newTTL.String()).
 			Msg("skipping, IPv4 not enabled")
 		metricDecision.WithLabelValues(proto, "add", "skip").Inc()
-		return
+		return false
 	}
 
 	if proto == "ipv6" && !useIPV6 {
@@ -177,7 +177,7 @@ func (mal *mikrotikAddrList) add(decision *models.Decision) {
 			Str("new_ttl", newTTL.String()).
 			Msg("skipping, IPv6 not enabled")
 		metricDecision.WithLabelValues(proto, "add", "skip").Inc()
-		return
+		return false
 	}
 
 	if proto == "ipv6" && useIPV6 {
@@ -220,9 +220,10 @@ func (mal *mikrotikAddrList) add(decision *models.Decision) {
 	}
 
 	mal.cache.Set(address, comment, newTTL)
+	return true
 }
 
-func (mal *mikrotikAddrList) remove(decision *models.Decision) {
+func (mal *mikrotikAddrList) remove(decision *models.Decision) bool {
 
 	log.Info().
 		Str("func", "add").
@@ -248,7 +249,7 @@ func (mal *mikrotikAddrList) remove(decision *models.Decision) {
 			Str("new_ttl", newTTL.String()).
 			Msg("skipping, IPv4 not enabled")
 		metricDecision.WithLabelValues(proto, "remove", "skip").Inc()
-		return
+		return false
 	}
 
 	if proto == "ipv6" && !useIPV6 {
@@ -258,7 +259,7 @@ func (mal *mikrotikAddrList) remove(decision *models.Decision) {
 			Str("new_ttl", newTTL.String()).
 			Msg("skipping, IPv6 not enabled")
 		metricDecision.WithLabelValues(proto, "remove", "skip").Inc()
-		return
+		return false
 	}
 
 	var item = &ttlcache.Item[string, string]{}
@@ -274,6 +275,7 @@ func (mal *mikrotikAddrList) remove(decision *models.Decision) {
 			Msgf("Address is in the cache, removing")
 		metricDecision.WithLabelValues(proto, "remove", "remove").Inc()
 		mal.cache.Delete(address)
+		return true
 
 	} else {
 		log.Info().
@@ -284,6 +286,7 @@ func (mal *mikrotikAddrList) remove(decision *models.Decision) {
 
 		metricCache.WithLabelValues("del", "miss").Inc()
 		metricDecision.WithLabelValues(proto, "remove", "no_op").Inc()
+		return false
 	}
 
 }
@@ -299,34 +302,30 @@ func (mal *mikrotikAddrList) decisionProcess(streamDecision *models.DecisionsStr
 
 	decisionsAdded := 0
 	decisionsDeleted := 0
-	decisionsCSCLI := 0
 
 	for _, decision := range streamDecision.Deleted {
-		mal.remove(decision)
-		if *decision.Origin == "cscli" {
-			decisionsCSCLI++
+		if mal.remove(decision) {
+			decisionsDeleted++
 		}
-		decisionsDeleted++
 		if decisionsDeleted == debugDecisionsMax {
 			break
 		}
 	}
 
 	for _, decision := range streamDecision.New {
-		mal.add(decision)
-		if *decision.Origin == "cscli" {
-			decisionsCSCLI++
+
+		if mal.add(decision) {
+			decisionsAdded++
 		}
-		decisionsAdded++
 		if decisionsAdded == debugDecisionsMax {
 			break
 		}
 	}
 
-	if updateOnCSCLI && decisionsCSCLI > 0 {
+	if triggerOnUpdate && ((decisionsAdded > 0) || (decisionsDeleted > 0)) {
 		log.Info().
-			Str("func", "setTTL").
-			Msg("detected decision originating from cscsli, triggering mikrotik update now")
+			Str("func", "decisionProcess").
+			Msg("detected decision changes, triggering mikrotik update now")
 		runMikrotikCommands(mal)
 	}
 }
