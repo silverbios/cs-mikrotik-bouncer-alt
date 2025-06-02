@@ -20,6 +20,7 @@ sequenceDiagram
   rect rgba(0, 0, 255, .25)
   loop Cache Update flow
     CrowdSec API ->>+ Bouncer: get decisions as stream<br/>insert/update/remove item into cache
+    Bouncer ->>+ Bouncer: trigger mikrotik update if needed
   end
   end
 
@@ -31,7 +32,7 @@ sequenceDiagram
   end
 
   rect rgba(255, 0, 0, .25)
-  loop Mikrotik configuration: every 1h
+  loop Mikrotik configuration: <br/>every 1h or on incoming decision
       Bouncer ->>+ Bouncer: create new address-list name
       Bouncer ->> Mikrotik: connection open
 
