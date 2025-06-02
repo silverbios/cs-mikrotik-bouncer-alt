@@ -1,7 +1,5 @@
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 GIT_SOURCE := $(shell git config --get remote.origin.url)
-#QUAY_REPO_USER := kaszpir
-#QUAY_REPO_NAME := quay.io/kaszpir/cs-mikrotik-bouncer:latest
 KO_DOCKER_REPO ?= quay.io/kaszpir/
 
 .DEFAULT_GOAL := help

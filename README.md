@@ -1,10 +1,12 @@
-# CrowdSec MikroTik Bouncer
+# CrowdSec MikroTik Bouncer Alternative
 
 This repository aim to implement a [CrowdSec](https://doc.crowdsec.net/) bouncer
 for the router [MikroTik](https://mikrotik.com) to block malicious IP to access your services.
 For this it leverages [MikroTik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
 
-A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by [funkolabs](https://github.com/funkolab/cs-mikrotik-bouncer).
+A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by [funkolabs](https://github.com/funkolab/cs-mikrotik-bouncer),
+but now living as standalone named as `Alternative` (or in short `alt`),
+to avoid confusion with the original repo and related integrations.
 
 Notice it works differently, some elements are common in the config, but
 make sure to read carefully this readme file for more details.
@@ -155,7 +157,7 @@ or section below.
 ## Prerequisites
 
 You should have a MikroTik appliance and a CrowdSec instance running.
-The container is available as docker image under [quay.io/kaszpir/cs-mikrotik-bouncer](https://quay.io/kaszpir/cs-mikrotik-bouncer).
+The container is available as docker image under [quay.io/kaszpir/cs-mikrotik-bouncer-alt](https://quay.io/kaszpir/cs-mikrotik-bouncer-alt).
 The running contaner must have access to CrowdSec and to MikroTik.
 
 # Configuration

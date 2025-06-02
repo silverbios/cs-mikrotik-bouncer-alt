@@ -1,4 +1,4 @@
-module github.com/funkolab/cs-mikrotik-bouncer
+module github.com/nvtkaszpir/cs-mikrotik-bouncer-alt
 
 go 1.24.1
 

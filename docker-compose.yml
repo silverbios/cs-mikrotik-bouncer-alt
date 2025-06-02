@@ -2,7 +2,7 @@ version: '3.8'
 services:
   bouncer-mikrotik-dev:
     container_name: bouncer-mikrotik-dev
-    image: quay.io/kaszpir/cs-mikrotik-bouncer:latest # TODO change it so it makes with locally built images?
+    image: quay.io/kaszpir/cs-mikrotik-bouncer-alt:latest # TODO change it so it makes with locally built images?
     env_file: ".env"
     ports:
       - 2112:2112/tcp # default metrics port

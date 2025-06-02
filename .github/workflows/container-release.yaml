@@ -22,7 +22,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: quay.io
-          username: "kaszpir+github"
+          username: "kaszpir+github_com_nvtkaszpir_cs_mikrotik_bouncer_alt"
           password: ${{ secrets.auth_token }}
 
       - name: Install ko
@@ -34,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: cs-mikrotik-bouncer
+          images: cs-mikrotik-bouncer-alt
           sep-tags: ","
           sep-labels: ","
           tags: |
@@ -51,6 +51,6 @@ jobs:
           PLATFORMS: linux/amd64,linux/arm64,linux/arm
         run: |
           go mod tidy
-          PTAGS=`echo $TAGS | sed 's/cs-mikrotik-bouncer://g'`
+          PTAGS=`echo $TAGS | sed 's/cs-mikrotik-bouncer-alt://g'`
           export SOURCE_DATE_EPOCH=$(date +%s)
           ko build -B --image-label "$LABELS" -t "$PTAGS" --platform=$PLATFORMS .
