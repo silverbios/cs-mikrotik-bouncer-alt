@@ -225,7 +225,7 @@ func (mal *mikrotikAddrList) add(decision *models.Decision) bool {
 func (mal *mikrotikAddrList) remove(decision *models.Decision) bool {
 
 	log.Info().
-		Str("func", "add").
+		Str("func", "remove").
 		Str("duration", *decision.Duration).
 		Str("origin", *decision.Origin).
 		Str("scenario", *decision.Scenario).
@@ -243,7 +243,7 @@ func (mal *mikrotikAddrList) remove(decision *models.Decision) bool {
 	newTTL := setTTL(*decision.Duration)
 	if proto == "ip" && !useIPV4 {
 		log.Debug().
-			Str("func", "add").
+			Str("func", "remove").
 			Str("address", address).
 			Str("new_ttl", newTTL.String()).
 			Msg("skipping, IPv4 not enabled")
@@ -253,7 +253,7 @@ func (mal *mikrotikAddrList) remove(decision *models.Decision) bool {
 
 	if proto == "ipv6" && !useIPV6 {
 		log.Debug().
-			Str("func", "add").
+			Str("func", "remove").
 			Str("address", address).
 			Str("new_ttl", newTTL.String()).
 			Msg("skipping, IPv6 not enabled")
