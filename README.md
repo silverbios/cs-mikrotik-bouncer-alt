@@ -118,6 +118,8 @@ at least once per hour.
   commands to create new MikroTik address-list and firewall update command
   to use that newly created address-list
 - prometheus metrics
+- use locking in the app to prevent concurrent address-list insertion within the
+  process (if you use concurrent bouncers then this still may happen anyway)
 
 ## Known limitations
 

@@ -25,15 +25,11 @@ func runMikrotikCommandsLoop(mal *mikrotikAddrList) {
 	go func() {
 		for {
 
-			// on app start and cache items is empty, wait 10 seconds for an update
-			// usually decisions are initiated under 5s on initial connect
-			if len(mal.cache.Items()) == 0 {
-				time.Sleep(10 * time.Second)
-			}
-
-			runMikrotikCommands(mal)
+			// on app start cache is empty but streamin decisions happens within 10s
+			// and in that case it will trigger runMikrotikCommands() anyway
 
 			time.Sleep(updateFreq)
+			runMikrotikCommands(mal)
 
 		}
 	}()
@@ -46,6 +42,9 @@ func runMikrotikCommandsLoop(mal *mikrotikAddrList) {
 // we need it to be executed periodically to ensure that if we use default_ttl_max
 // then we readd address prior expiry
 func runMikrotikCommands(mal *mikrotikAddrList) {
+
+	mal.mutex.Lock()
+	defer mal.mutex.Unlock()
 
 	// TODO: allow defining custom format of target address-list name
 	listName := fmt.Sprintf("%s_%s", addressList, time.Now().UTC().Format("2006-01-02_15-04-05"))

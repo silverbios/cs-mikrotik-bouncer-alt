@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/go-routeros/routeros/v3"
 	"github.com/jellydator/ttlcache/v3"
@@ -21,6 +22,7 @@ type mikrotikAddrList struct {
 	c *routeros.Client
 	// cache map[string]string
 	cache *ttlcache.Cache[string, string]
+	mutex sync.Mutex
 }
 
 func main() {
