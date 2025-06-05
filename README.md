@@ -1,5 +1,7 @@
 # CrowdSec MikroTik Bouncer Alternative
 
+![mikrotik plus crowdsec](./docs/assets/mikrotik_plus_crowdsec_small_800.png)
+
 This repository aim to implement a [CrowdSec](https://doc.crowdsec.net/) bouncer
 for the router [MikroTik](https://mikrotik.com) to block malicious IP to access your services.
 For this it leverages [MikroTik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
@@ -186,18 +188,28 @@ Remember to filter out access for the created user for given address only etc.
 For IPv6 - create IPv6 'drop' filter rules in `input` and `forward`
 chain with the source address list set to `crowdsec` at the top.
 
-Below are snippets to use, make sure to replace `ether1` with your desired interface:
+Below are snippets to use, make sure to replace `ether1` with your desired interface.
+Notice that if you use `place-before=0` then the order below is important,
+and for `dst-address-list` we do not define interface.
 
 ```shell
 /ipv6 firewall filter \
+add action=drop dst-address-list=crowdsec chain=input \
+place-before=0 comment="crowdsec input drop rules - dst"
+
+/ipv6 firewall filter \
+add action=drop dst-address-list=crowdsec chain=forward \
+place-before=0 comment="crowdsec forward drop rules - dst"
+
+/ipv6 firewall filter \
 add action=drop src-address-list=crowdsec chain=input \
 in-interface=ether1 \
-place-before=0 comment="crowdsec input drop rules"
+place-before=0 comment="crowdsec input drop rules - src"
 
 /ipv6 firewall filter \
 add action=drop src-address-list=crowdsec chain=forward \
 in-interface=ether1 \
-place-before=0 comment="crowdsec forward drop rules"
+place-before=0 comment="crowdsec forward drop rules - src"
 
 ```
 
@@ -211,18 +223,28 @@ generic packet counter rule.
 
 Below are snippets to use, make sure to replace `ether1` with your desired interface,
 assuming that rule 0 is a dummy passthrough for packet counting added by default
-to MikroTik, and rule 1 is whatever but we want to insert CrowdSec before it:
+to MikroTik, and rule 1 is whatever but we want to insert CrowdSec before it.
+Notice that if you use `place-before=1` then the order below is important,
+and for `dst-address-list` we do not define interface.
 
 ```shell
 /ip firewall filter \
+add action=drop dst-address-list=crowdsec chain=input \
+place-before=1 comment="crowdsec input drop rules - dst"
+
+/ip firewall filter \
+add action=drop dst-address-list=crowdsec chain=forward \
+place-before=1 comment="crowdsec forward drop rules - dst"
+
+/ip firewall filter \
 add action=drop src-address-list=crowdsec chain=input \
 in-interface=ether1 \
-place-before=1 comment="crowdsec input drop rules"
+place-before=1 comment="crowdsec input drop rules - src"
 
 /ip firewall filter \
 add action=drop src-address-list=crowdsec chain=forward \
 in-interface=ether1 \
-place-before=1 comment="crowdsec forward drop rules"
+place-before=1 comment="crowdsec forward drop rules - src"
 
 ```
 
@@ -247,41 +269,59 @@ Flags: X - disabled, I - invalid; D - dynamic
  0  D ;;; special dummy rule to show fasttrack counters
       chain=forward action=passthrough
 
- 1    ;;; crowdsec input drop rules
-      chain=input action=drop src-address-list=crowdsec_2025-05-30_20-03-09 in-interface=ether1
+ 1    ;;; crowdsec forward drop rules - src
+      chain=forward action=drop src-address-list=crowdsec in-interface=ether1 log=no log-prefix=""
 
- 2    ;;; crowdsec forward drop rules
-      chain=forward action=drop src-address-list=crowdsec_2025-05-30_20-03-09 in-interface=ether1
+ 2    ;;; crowdsec input drop rules - src
+      chain=input action=drop src-address-list=crowdsec in-interface=ether1 log=no log-prefix=""
 
- 3    ;;; defconf: accept established,related,untracked
+ 3    ;;; crowdsec forward drop rules - dst
+      chain=forward action=drop dst-address-list=crowdsec log=no log-prefix=""
+
+ 4    ;;; crowdsec input drop rules - dst
+      chain=input action=drop dst-address-list=crowdsec log=no log-prefix=""
+
+ 5    ;;; defconf: accept established,related,untracked
       chain=input action=accept connection-state=established,related,untracked
 
- 4    ;;; defconf: drop invalid
+ 6    ;;; defconf: drop invalid
       chain=input action=drop connection-state=invalid
 
 ```
 
-then your `IP_FIREWALL_RULES` would be `1,2`.
+then:
+
+- `IP_FIREWALL_RULES_SRC` would be `1,2`
+- `IP_FIREWALL_RULES_DST` would be `3,4`
 
 Similar, for IPv6:
 
 ```text
 > /ipv6 firewall filter print without-paging
 Flags: X - disabled, I - invalid; D - dynamic
- 0    ;;; crowdsec forward drop rules
-      chain=forward action=drop src-address-list=crowdsec_2025-05-29_20-37-42 in-interface=ether1
+ 0    ;;; crowdsec input drop rules - src
+      chain=input action=drop src-address-list=crowdsec in-interface=ether1 log=no log-prefix=""
 
- 1    ;;; crowdsec input drop rules
-      chain=input action=drop src-address-list=crowdsec_2025-05-29_20-37-42 in-interface=ether1
+ 1    ;;; crowdsec forward drop rules - src
+      chain=forward action=drop src-address-list=crowdsec in-interface=ether1 log=no log-prefix=""
 
- 2    ;;; defconf: drop invalid
+ 2    ;;; crowdsec input drop rules - dst
+      chain=input action=drop log=no log-prefix=""
+
+ 3    ;;; crowdsec forward drop rules - dst
+      chain=forward action=drop log=no log-prefix=""
+
+ 4    ;;; defconf: drop invalid
       chain=input action=drop connection-state=invalid
 
- 3    ;;; defconf: accept established,related,untracked
+ 5    ;;; defconf: accept established,related,untracked
       chain=input action=accept connection-state=established,related,untracked
 ```
 
-then your `IPV6_FIREWALL_RULES` would be `0,1`.
+then:
+
+- `IPV6_FIREWALL_RULES_SRC` would be `0,1`
+- `IPV6_FIREWALL_RULES_DST` would be `2,3`
 
 ### Prepare config for the app
 
@@ -344,16 +384,28 @@ The bouncer configuration is made via environment variables:
 - `MIKROTIK_IPV4` - default value: `true`, optional,
   IPv4 support, set to `true` to enable processing IPv4 blocklists
 
-- `IP_FIREWALL_RULES` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
+- `IP_FIREWALL_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
   comma separated numbers of IPv4 firewall rules to update on access-list change,
+  and to set src-address-list in it,
   those are created during configuration, for example `1,2` (input,forward)
+
+- `IP_FIREWALL_RULES_DST` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
+  comma separated numbers of IPv4 firewall rules to update on access-list change,
+  and to set dst-address-list in it,
+  those are created during configuration, for example `3,4` (input,forward)
 
 - `MIKROTIK_IPV6` - default value: `true`,  optional,
   IPv6 support, set to `true` to enable processing IPv6 blocklists
 
-- `IPV6_FIREWALL_RULES` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
+- `IPV6_FIREWALL_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
   comma separated numbers of IPv6 firewall rules to update on access-list change,
+  and to set src-address-list in it,
   those are created during configuration , for example `0,1` (input,forward)
+
+- `IPV6_FIREWALL_RULES_DST` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
+  comma separated numbers of IPv6 firewall rules to update on access-list change,
+  and to set dst-address-list in it,
+  those are created during configuration , for example `2,3` (input,forward)
 
 - `MIKROTIK_ADDRESS_LIST` - default value: `crowdsec`, optional,
   prefix for target address-list in MikroTik device, no special chars,
