@@ -39,10 +39,12 @@ var (
 	// set to true if you want to use maxTTL
 	useMaxTTL bool
 
-	firewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4
-	firewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6
-	logLevel            string // 0=debug, 1=info
-	metricsAddr         string // prometheus listen address
+	srcFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for source rules
+	srcFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for source rules
+	dstFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for destination rules
+	dstFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for destination rules
+	logLevel               string // 0=debug, 1=info
+	metricsAddr            string // prometheus listen address
 
 	mikrotikHost string        // address of the mikrotik device
 	password     string        // mikrotik api password
@@ -131,20 +133,36 @@ func initConfig() {
 			Msg("mikrotik_address_list cannot be empty")
 	}
 
-	viper.BindEnv("ip_firewall_rules") // TODO: add checker that those are numbers with commas only
-	firewallRuleIdsIPv4 = viper.GetString("ip_firewall_rules")
-	if useIPV4 && firewallRuleIdsIPv4 == "" {
+	viper.BindEnv("ip_firewall_rules_src") // TODO: add checker that those are numbers with commas only
+	srcFirewallRuleIdsIPv4 = viper.GetString("ip_firewall_rules_src")
+	if useIPV4 && srcFirewallRuleIdsIPv4 == "" {
 		log.Fatal().
 			Str("func", "config").
-			Msg("ip_firewall_rules cannot be empty")
+			Msg("ip_firewall_rules_src cannot be empty")
 	}
 
-	viper.BindEnv("ipv6_firewall_rules") // TODO: add checker that those are numbers with commas only
-	firewallRuleIdsIPv6 = viper.GetString("ipv6_firewall_rules")
-	if useIPV6 && firewallRuleIdsIPv6 == "" {
+	viper.BindEnv("ipv6_firewall_rules_src") // TODO: add checker that those are numbers with commas only
+	srcFirewallRuleIdsIPv6 = viper.GetString("ipv6_firewall_rules_src")
+	if useIPV6 && srcFirewallRuleIdsIPv6 == "" {
 		log.Fatal().
 			Str("func", "config").
-			Msg("ipv6_firewall_rules cannot be empty")
+			Msg("ipv6_firewall_rules_src cannot be empty")
+	}
+
+	viper.BindEnv("ip_firewall_rules_dst") // TODO: add checker that those are numbers with commas only
+	dstFirewallRuleIdsIPv4 = viper.GetString("ip_firewall_rules_dst")
+	if useIPV4 && dstFirewallRuleIdsIPv4 == "" {
+		log.Fatal().
+			Str("func", "config").
+			Msg("ip_firewall_rules_dst cannot be empty")
+	}
+
+	viper.BindEnv("ipv6_firewall_rules_dst") // TODO: add checker that those are numbers with commas only
+	dstFirewallRuleIdsIPv6 = viper.GetString("ipv6_firewall_rules_dst")
+	if useIPV6 && dstFirewallRuleIdsIPv6 == "" {
+		log.Fatal().
+			Str("func", "config").
+			Msg("ipv6_firewall_rules_dst cannot be empty")
 	}
 
 	viper.BindEnv("mikrotik_timeout")

@@ -48,6 +48,16 @@ var (
 	},
 		[]string{"proto", "func", "operation", "result"},
 	)
+	metricMikrotikCmdDur = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "mikrotik_cmd_duration_total",
+		Help: "Total time spend executing commands in mikrotik, in microseconds",
+	},
+	)
+	metricLockWait = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "lock_wait_duration_total",
+		Help: "Total time spend waiting to get lock to execute commands in mikrotik, in microseconds",
+	},
+	)
 )
 
 func recordMetrics(mal *mikrotikAddrList) {

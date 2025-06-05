@@ -35,6 +35,10 @@ func runMikrotikCommandsLoop(mal *mikrotikAddrList) {
 	}()
 }
 
+func runMikrotikCommandsMetric(startTime int64) {
+	metricMikrotikCmdDur.Add(float64(time.Now().UnixMicro() - startTime))
+}
+
 // runMikrotikCommands walks over the cached address list
 // and adds addresses to new address-list in MikroTik
 // and updates firewall rules to use that new address list
@@ -42,9 +46,13 @@ func runMikrotikCommandsLoop(mal *mikrotikAddrList) {
 // we need it to be executed periodically to ensure that if we use default_ttl_max
 // then we readd address prior expiry
 func runMikrotikCommands(mal *mikrotikAddrList) {
-
+	lockWaitStart := time.Now().UnixMicro()
 	mal.mutex.Lock()
+	lockWaitEnd := time.Now().UnixMicro()
+	metricLockWait.Add(float64(lockWaitEnd - lockWaitStart))
+
 	defer mal.mutex.Unlock()
+	defer runMikrotikCommandsMetric(lockWaitStart)
 
 	// TODO: allow defining custom format of target address-list name
 	listName := fmt.Sprintf("%s_%s", addressList, time.Now().UTC().Format("2006-01-02_15-04-05"))
@@ -67,7 +75,9 @@ func runMikrotikCommands(mal *mikrotikAddrList) {
 	}
 
 	if useIPV4 {
-		err = mal.setAddressListInFilter("ip", listName, firewallRuleIdsIPv4)
+		// TODO: do something with the errors?
+		_ = mal.setAddressListInFilter("ip", listName, srcFirewallRuleIdsIPv4, "src")
+		_ = mal.setAddressListInFilter("ip", listName, dstFirewallRuleIdsIPv4, "dst")
 
 	} else {
 		log.Debug().
@@ -77,7 +87,8 @@ func runMikrotikCommands(mal *mikrotikAddrList) {
 	}
 
 	if useIPV6 {
-		err = mal.setAddressListInFilter("ipv6", listName, firewallRuleIdsIPv6)
+		_ = mal.setAddressListInFilter("ipv6", listName, srcFirewallRuleIdsIPv6, "src")
+		_ = mal.setAddressListInFilter("ipv6", listName, dstFirewallRuleIdsIPv6, "dst")
 	} else {
 		log.Debug().
 			Str("func", "runMikrotikCommands").
@@ -488,26 +499,41 @@ func (mal *mikrotikAddrList) addToAddressList(listName string, address string, t
 // firewallRuleId - filter id in mikrotik firewall rules
 //
 // listName - name of the list in the address-list, we assume it exists
-func (mal *mikrotikAddrList) setAddressListInFilter(proto string, listName string, firewallRuleIds string) error {
+//
+// where - where to put the address, only valid values are 'src' and 'dst'
+func (mal *mikrotikAddrList) setAddressListInFilter(proto string, listName string, firewallRuleIds string, where string) error {
 
 	if proto != "ip" && proto != "ipv6" {
 		log.Error().
 			Str("func", "setAddressListInFilter").
 			Str("proto", proto).
+			Str("where", where).
 			Str("listName", listName).
 			Str("firewallRuleIds", firewallRuleIds).
-			Msgf("Invalid protocol, valid values are 'ip' or 'ipv6'")
+			Msgf("Invalid protocol, valid values are 'ip' or 'ipv6', got '%s'", proto)
 		return nil
 	}
 
+	if where != "src" && where != "dst" {
+		log.Error().
+			Str("func", "setAddressListInFilter").
+			Str("proto", proto).
+			Str("where", where).
+			Str("listName", listName).
+			Str("firewallRuleIds", firewallRuleIds).
+			Msgf("Invalid 'where' value, valid values are 'src' or 'dst', got '%s'", where)
+		return nil
+	}
+
+	whereStr := fmt.Sprintf("%s-address-list", where)
 	log.Debug().
 		Str("func", "setAddressListInFilter").
 		Str("proto", proto).
-		Str("src-address-list", listName).
+		Str(whereStr, listName).
 		Str("number", firewallRuleIds).
-		Msgf("mikrotik: /%s firewall filter set src-address-list=%s number=%s", proto, listName, firewallRuleIds)
+		Msgf("mikrotik: /%s firewall filter set %s=%s number=%s", proto, whereStr, listName, firewallRuleIds)
 
-	cmd := fmt.Sprintf("/%s/firewall/filter/set#=src-address-list=%s#=.id=%s", proto, listName, firewallRuleIds)
+	cmd := fmt.Sprintf("/%s/firewall/filter/set#=%s=%s#=.id=%s", proto, whereStr, listName, firewallRuleIds)
 
 	r, err := mal.c.RunArgs(strings.Split(cmd, "#"))
 	log.Debug().
@@ -517,9 +543,9 @@ func (mal *mikrotikAddrList) setAddressListInFilter(proto string, listName strin
 		log.Error().Err(err).
 			Str("func", "setAddressListInFilter").
 			Str("proto", proto).
-			Str("src-address-list", listName).
+			Str(whereStr, listName).
 			Str("number", firewallRuleIds).
-			Msgf("Failed to set address-list in filter")
+			Msgf("Failed to set %s in filter", whereStr)
 		metricMikrotikCmd.WithLabelValues(proto, "filter", "set", "error").Inc()
 		return err
 
@@ -528,8 +554,8 @@ func (mal *mikrotikAddrList) setAddressListInFilter(proto string, listName strin
 	log.Info().
 		Str("func", "setAddressListInFilter").
 		Str("proto", proto).
-		Str("src-address-list", listName).
+		Str(whereStr, listName).
 		Str("number", firewallRuleIds).
-		Msgf("New address-list set to firewall filter in mikrotik successfully")
+		Msgf("New %s set to firewall filter in mikrotik successfully", whereStr)
 	return nil
 }
