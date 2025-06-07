@@ -147,7 +147,7 @@ func initConfig() {
 
 	viper.BindEnv("mikrotik_timeout")
 	viper.SetDefault("mikrotik_timeout", "10s")
-	timeout = viper.GetDuration("mikrotik_timeout") // TODO: clean up viper.GetDuration
+	timeout = viper.GetDuration("mikrotik_timeout")
 	timeoutD, err := time.ParseDuration(timeout.String())
 	if err != nil {
 		log.Fatal().
@@ -159,7 +159,7 @@ func initConfig() {
 
 	viper.BindEnv("mikrotik_update_frequency")
 	viper.SetDefault("mikrotik_update_frequency", "1h")
-	updateFreq = viper.GetDuration("mikrotik_update_frequency") // TODO: clean up viper.GetDuration
+	updateFreq = viper.GetDuration("mikrotik_update_frequency")
 	updateFreqD, err := time.ParseDuration(updateFreq.String())
 	if err != nil {
 		log.Fatal().
@@ -223,7 +223,7 @@ func initConfig() {
 		log.Fatal().
 			Err(err).
 			Str("func", "config").
-			Str("default_ttl_max", viper.GetString("default_ttl_max")).
+			Str("default_ttl_max", maxTTL.String()).
 			Str("mikrotik_update_frequency", viper.GetString("mikrotik_update_frequency")).
 			Msg("default_ttl_max can not be shorter than mikrotik_update_frequency")
 	}

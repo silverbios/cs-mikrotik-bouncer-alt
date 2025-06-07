@@ -148,9 +148,15 @@ at least once per hour.
 - [ko local](https://ko.build/configuration/)
   or `docker run -p 2112:2112 $(ko build ./cmd/app)` etc
 - maybe mkdocs + gh pages?
-- graceful shutdown, so that adding addresses and firewall is finished?
 
 - panic on no route to host in docker-compose up :D
+
+### Not To do
+
+- graceful shutdown, so that adding addresses and firewall is finished?
+  not needed, in worst case address-list is half populated but not applied to firewall,
+  so the old address list is still active, and when the new process spawns then
+  it will create a new list.
 
 ## Running
 

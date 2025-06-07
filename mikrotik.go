@@ -352,7 +352,6 @@ func setTTL(timeStr string) time.Duration {
 			Str("effective", ttl.String()).
 			Msg("Failed to parse input mikrotik timeout value, setting default TTL")
 	}
-	// TODO: add metric for good/bad timeout values
 	return ttl
 }
 
