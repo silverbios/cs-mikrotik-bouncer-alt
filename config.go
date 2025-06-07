@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -133,36 +134,15 @@ func initConfig() {
 			Msg("mikrotik_address_list cannot be empty")
 	}
 
-	viper.BindEnv("ip_firewall_rules_src") // TODO: add checker that those are numbers with commas only
-	srcFirewallRuleIdsIPv4 = viper.GetString("ip_firewall_rules_src")
-	if useIPV4 && srcFirewallRuleIdsIPv4 == "" {
-		log.Fatal().
-			Str("func", "config").
-			Msg("ip_firewall_rules_src cannot be empty")
+	if useIPV4 {
+		srcFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_src")
+		dstFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_dst")
+
 	}
 
-	viper.BindEnv("ipv6_firewall_rules_src") // TODO: add checker that those are numbers with commas only
-	srcFirewallRuleIdsIPv6 = viper.GetString("ipv6_firewall_rules_src")
-	if useIPV6 && srcFirewallRuleIdsIPv6 == "" {
-		log.Fatal().
-			Str("func", "config").
-			Msg("ipv6_firewall_rules_src cannot be empty")
-	}
-
-	viper.BindEnv("ip_firewall_rules_dst") // TODO: add checker that those are numbers with commas only
-	dstFirewallRuleIdsIPv4 = viper.GetString("ip_firewall_rules_dst")
-	if useIPV4 && dstFirewallRuleIdsIPv4 == "" {
-		log.Fatal().
-			Str("func", "config").
-			Msg("ip_firewall_rules_dst cannot be empty")
-	}
-
-	viper.BindEnv("ipv6_firewall_rules_dst") // TODO: add checker that those are numbers with commas only
-	dstFirewallRuleIdsIPv6 = viper.GetString("ipv6_firewall_rules_dst")
-	if useIPV6 && dstFirewallRuleIdsIPv6 == "" {
-		log.Fatal().
-			Str("func", "config").
-			Msg("ipv6_firewall_rules_dst cannot be empty")
+	if useIPV6 {
+		srcFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_src")
+		dstFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_dst")
 	}
 
 	viper.BindEnv("mikrotik_timeout")
@@ -275,4 +255,30 @@ func initConfig() {
 		Str("func", "config").
 		Msgf("Setting mikrotik_update_requency to %v", updateFreqD)
 
+}
+
+// cfgValidateFirewall checks if the input string is a valid mikrotik firewall format
+// so just numbers and commas
+func cfgValidateFirewall(name string) string {
+
+	viper.BindEnv(name)
+	value := viper.GetString(name)
+
+	if value == "" {
+		log.Fatal().
+			Str("func", "config").
+			Str(name, value).
+			Msgf("%s cannot be empty", name)
+
+	}
+
+	match, _ := regexp.MatchString("^([0-9]+,?)+$", value)
+	if !match {
+		log.Fatal().
+			Str("func", "config").
+			Str(name, value).
+			Msgf("%s can contain only numbers and commas, aborting", name)
+	}
+
+	return value
 }
