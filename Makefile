@@ -24,3 +24,10 @@ image: ## build images
 .PHONY: fmt
 fmt: ## go tile formatter
 	go fmt ./...
+
+.PHONY: update
+update: ## update golang deps
+	go get -u
+	go mod tidy
+	go mod vendor
+
