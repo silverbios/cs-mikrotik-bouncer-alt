@@ -41,7 +41,7 @@ func main() {
 	}()
 	log.Info().
 		Str("func", "main").
-		Msgf("metrics server started")
+		Msgf("Metrics server started")
 
 	bouncer := &csbouncer.StreamBouncer{
 		APIKey:         crowdsecBouncerAPIKey,
@@ -69,7 +69,7 @@ func main() {
 
 	g.Go(func() error {
 		bouncer.Run(ctx)
-		return fmt.Errorf("bouncer stream halted")
+		return fmt.Errorf("Bouncer stream halted")
 	})
 
 	g.Go(func() error {
@@ -82,7 +82,7 @@ func main() {
 			case <-ctx.Done():
 				log.Error().
 					Str("func", "main").
-					Msg("terminating bouncer process")
+					Msg("Terminating bouncer process")
 				return nil
 			case decisions := <-bouncer.Stream:
 				mal.decisionProcess(decisions)
