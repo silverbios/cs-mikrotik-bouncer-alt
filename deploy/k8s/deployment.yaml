@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bouncer-mikrotik
+  labels:
+    k8s-app: crowdsec
+    type: bouncer-mikrotik
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      k8s-app: crowdsec
+      type: bouncer-mikrotik
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        k8s-app: crowdsec
+        type: bouncer-mikrotik
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: bouncer-mikrotik
+          envFrom:
+            - secretRef:
+                name: bouncer-mikrotik
+          image: quay.io/kaszpir/cs-mikrotik-bouncer-alt
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 2112
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "100m"
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      terminationGracePeriodSeconds: 30

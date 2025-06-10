@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bouncer-mikrotik-metrics
+  labels:
+    k8s-app: crowdsec
+    type: bouncer-mikrotik
+spec:
+  type: ClusterIP
+  ports:
+    - port: 2112
+      protocol: TCP
+      name: metrics
+  selector:
+    k8s-app: crowdsec
+    type: bouncer-mikrotik

@@ -123,6 +123,11 @@ at least once per hour.
 - use locking in the app to prevent concurrent address-list insertion within the
   process (if you use concurrent bouncers then this still may happen anyway)
 
+![grafana_dashboard_1](./docs/assets/grafana_dashboard_1-fs8.png)
+
+![grafana_dashboard_2](./docs/assets/grafana_dashboard_2-fs8.png)
+
+
 ## Known limitations
 
 - code executes commands against single MikroTik device, this is by design,
@@ -137,17 +142,18 @@ at least once per hour.
 
 ### TODO
 
+- maybe mkdocs + gh pages?
+
 - double check if there is an error after adding address, then if we try to
   update fw rule to new list:
   - if change to new list then it may be truncated ( missing entries)
   - if we keep to old list or dont add new list, then things can expire
+
 - periodically ask MikroTik for `ip firewall address-list count-only` and make
   metric from it?
-- add grafana dashboard
-- k8s manifests
+
 - [ko local](https://ko.build/configuration/)
   or `docker run -p 2112:2112 $(ko build ./cmd/app)` etc
-- maybe mkdocs + gh pages?
 
 - panic on no route to host in docker-compose up :D
 
@@ -346,9 +352,47 @@ Paste this API key as the value for bouncer environment variable `CROWDSEC_BOUNC
 Adjust other variables in .env file as needed, especially host to MikroTik
 device and CrowdSec endpoint. See section below.
 
-### Run the app
+# Deployment
 
-Start bouncer with `docker-compose up` and investigate errors.
+Only Linux deployments were tested.
+
+## Locally
+
+Make sure to have a golang installed locally, edit .env file and then
+
+```shell
+export $(cat .env | xargs)
+go run .
+
+```
+
+## Docker
+
+I recommend using [docker-compose](./deploy/docker/docker-compose.yaml),
+copy .env file there and start bouncer with `docker compose up` and investigate errors.
+
+## Kubernetes
+
+Kustomization files in [kubernetes](./deploy/k8s/) via [kustomize](https://kustomize.io/)
+with optional ServiceMonitor for automatic metric collections via Prometheus Operator.
+
+I suggest to deploy a bouncer  in a separate namespace for each target MikroTik device.
+
+If needed change in ServiceMonitor relabelings if you want to distinguish bouncers
+in grafana (not implemented yet in the dashboard)
+
+```yaml
+...
+  endpoints:
+    - port: metrics
+      scheme: http
+      interval: 10s
+      path: /metrics
+      relabelings:
+        - targetLabel: device # label key
+          replacement: hap-ax-3 # label value
+
+```
 
 # Configuration options
 
@@ -487,6 +531,9 @@ The bouncer configuration is made via environment variables:
 If running locally see [http://127.0.0.1:2112/metrics](http://127.0.0.1:2112/metrics)
 
 Some metrics appear after a while.
+
+[Grafana dashboard](./observability/grafana/CrowdSec_bouncer-mikrotik.json)
+
 Most important ones:
 
 - `mikrotik_cmd_total{result="error"}` - number of errors when trying to communicate with MikroTik

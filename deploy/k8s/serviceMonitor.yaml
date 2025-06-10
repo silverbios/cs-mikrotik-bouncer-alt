@@ -1,0 +1,18 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: bouncer-mikrotik-metrics
+spec:
+  selector:
+    matchLabels:
+      k8s-app: crowdsec
+      type: bouncer-mikrotik
+  namespaceSelector:
+    matchNames:
+      - crowdsec
+  endpoints:
+    - port: metrics
+      scheme: http
+      interval: 10s
+      path: /metrics
