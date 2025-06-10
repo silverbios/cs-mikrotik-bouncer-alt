@@ -490,9 +490,25 @@ Some metrics appear after a while.
 Most important ones:
 
 - `mikrotik_cmd_total{result="error"}` - number of errors when trying to communicate with MikroTik
+
 - `mikrotik_cmd_total{result="success"}` - number of commands succesfully executed on MikroTik
+
 - `decisions_total{}` - processed incoming CrowdSec decisions to block/unblock addresses
+
 - `truncated_ttl_total{}` - number of ban truncated because they were too long
+
+- `mikrotik_cmd_duration_total` - duration of the commands executed when doing an update,
+  for example when using HAP AX3 this should usually be about 10 to 15 seconds per update
+  for inserting about 20.000 addresses to a new address-list
+
+- `lock_wait_duration_total` - time spent for waiting for the lock to run commands to update
+  a Mikrotik device, in general this should be microseconds, unless there is an existing update
+  and there is a lot of decisions to be processed, usually if this takes few seconds
+  few times per hour then it is okay, but if you get few seconds constantly then
+  you may need to check how many addresses are added to the address-list,
+  shorten default ttl to an hour to prevent massive number of addresses in address lists
+  or upgrade hardware. Another option would be to implement different update mechanism,
+  so make a new issue on GitHub.
 
 # Contribution
 
