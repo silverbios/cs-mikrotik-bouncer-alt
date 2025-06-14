@@ -1,17 +1,25 @@
 # CrowdSec MikroTik Bouncer Alternative
 
-![mikrotik plus crowdsec](./docs/assets/mikrotik_plus_crowdsec_small_800.png)
+![MikroTik plus CrowdSec](./docs/assets/mikrotik_plus_crowdsec_small_800.png)
 
-This repository aim to implement a [CrowdSec](https://doc.crowdsec.net/) bouncer
-for the router [MikroTik](https://mikrotik.com) to block malicious IP to access your services.
+This project is not affiliated in any way with CrowdSec nor MikroTik,
+use at your own risk.
+
+This repository aims to implement the [MikroTik](https://mikrotik.com) router as
+[CrowdSec](https://doc.crowdsec.net/) Remediation Component (formerly known as bouncer),
+thus making it easier to block malicious IP to access your services.
 For this it leverages [MikroTik API](https://mikrotik.com) to populate a dynamic Firewall Address List.
 
-A fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by [funkolabs](https://github.com/funkolab/cs-mikrotik-bouncer),
-but now living as standalone named as `Alternative` (or in short `alt`),
+This started as a fork of `CrowdSec Bouncer for MikroTik RouterOS appliance` by [funkolabs](https://github.com/funkolab/cs-mikrotik-bouncer),
+but now it is living as standalone project, named as `Alternative` (or in short `alt`),
 to avoid confusion with the original repo and related integrations.
 
-Notice it works differently, some elements are common in the config, but
-make sure to read carefully this readme file for more details.
+Notice it works differently, some elements are common in the config, so the migration is quite easy,
+but make sure to read carefully this readme file for more details.
+
+# Architecture
+
+## App architecture
 
 ```mermaid
 sequenceDiagram
@@ -24,7 +32,7 @@ sequenceDiagram
   rect rgba(0, 0, 255, .25)
   loop Cache Update flow
     CrowdSec API ->>+ Bouncer: get decisions as stream<br/>insert/update/remove item into cache
-    Bouncer ->>+ Bouncer: trigger mikrotik update if needed
+    Bouncer ->>+ Bouncer: trigger MikroTik update if needed
   end
   end
 
@@ -61,6 +69,36 @@ sequenceDiagram
 
 ```
 
+## Example appliances
+
+### Processing syslog logs from MikroTik
+
+```mermaid
+sequenceDiagram
+  IP 1.2.3.4 ->> Mikrotik: incoming request
+  Mikrotik ->> Log processor: send syslog messages from firewall
+  Log processor ->> Log processor: detect port scans
+  Log processor ->> Crowdsec LAPI: malicious activity detected for IP 1.2.3.4
+  Crowdsec LAPI ->> Crowdsec LAPI: ban 1.2.3.4
+  Crowdsec LAPI ->> Mikrotik Bouncer: stream bans
+  Mikrotik Bouncer ->> Mikrotik: update address lists, block 1.2.3.4
+  IP 1.2.3.4 --x  Mikrotik: drop traffic
+```
+
+### Blocking traffic at the edge
+
+```mermaid
+sequenceDiagram
+  IP 1.2.3.4 --> Mikrotik: incoming request
+  Mikrotik ->> Load Balancer: NAT traffic for web
+  Load Balancer ->> Web server pool: lad balance traffic to web servers
+  Web server pool ->> Crowdsec LAPI: malicious activity detected for IP 1.2.3.4
+  Crowdsec LAPI ->> Crowdsec LAPI: ban 1.2.3.4
+  Crowdsec LAPI ->> Mikrotik Bouncer: stream bans
+  Mikrotik Bouncer ->> Mikrotik: update address lists, block 1.2.3.4
+  IP 1.2.3.4 --x  Mikrotik: drop traffic
+```
+
 ## Differences
 
 Funkolabs version tries to dynamically update addresses in address lists on the
@@ -71,13 +109,18 @@ MikroTik device. This has some disadvantages:
   from the CrowdSec LAPI, and then tries to update the addresses in the MikroTik.
   So generally bouncer was doing a diff between upstream and MikroTik device,
   which is complex
+
 - Doing `ip address find` on the MikroTik is slow, on certain devices this is
   **VERY** slow, making noticeable load on the CPU of the device
+
 - above caused that some devices were not blocking addresses fast enough,
   or some addresses were not blocked at all, thus the diff process was
-  lagging behind the main update loop until there was a noticeable desynch
+  lagging behind the main update loop until there was a noticeable desynchronization
+  which could be solved only by the app restart
+
 - some people mitigated it with scheduled app restarts after few hours,
   effectively making cache not really useful
+
 - in addition it kept constant connections to the MikroTik device, I am not sure
   how it handled network errors - maybe crashes in containers helped it to
   auto recover :)
@@ -85,14 +128,19 @@ MikroTik device. This has some disadvantages:
 This fork works differently:
 
 - there is no need to fetch addresses from the MikroTik device at all
-- listen for the decisions from Crowdsec LAPI and compare it with local cache,
+
+- listen for the decisions from Crowdsec LAPI and compare it with local cache
+
 - if there are differences between the cache such as add/delete/update
   then process the addresses
+
 - in separate loop walk over addresses in local cache,
   and only then connect to the MikroTik device
+
 - add address to a **NEW** address-list on the MikroTik,
   optionally prior inserting the address shorten expiry time to desired value
   to say 4h ( I named that as `truncate`) .
+
 - if there were no errors then alter specific existing firewall rules to use
   that new address-list - the swap is quick and atomic
 
@@ -105,28 +153,39 @@ at least once per hour.
 
 ## Features
 
-- set max time for ip address blocking - new decision comes in for 6 days,
+- set max time for IP address blocking - new decision comes in for 6 days,
   but this tool changes it to a series of update 4h bans in MikroTik
-- faster operation, especially on older devices
+
+- faster operation than other project, especially on older devices
+
 - you can test it without affecting existing setup - creates new address-lists
   and updates specific firewall rules which can be disabled, thus easy to
   migrate from old to a new setup without breaking old configuration
+
 - detailed messages in log, optionally plain text messages
-- option to limit incoming decisions to desired value such as 2, to make it
-  easier to test setups prior production
+
+- option to limit incoming decisions to desired value such as maximum 2 bans
+  to process, to make it easier to test setups prior production
+
 - separate loop to fetch decisions from the CrowdSec LAPI, which inserts
   addresses to the local cache
+
 - separate loop to process addresses in the local cache and convert it to the
   commands to create new MikroTik address-list and firewall update command
   to use that newly created address-list
-- prometheus metrics
+
 - use locking in the app to prevent concurrent address-list insertion within the
   process (if you use concurrent bouncers then this still may happen anyway)
+
+- create connection to the MikroTik only if update is needed
+
+- designed to run in container without any privileges, read only container
+
+- prometheus metrics, which allows you to use grafana dashboards
 
 ![grafana_dashboard_1](./docs/assets/grafana_dashboard_1-fs8.png)
 
 ![grafana_dashboard_2](./docs/assets/grafana_dashboard_2-fs8.png)
-
 
 ## Known limitations
 
@@ -137,8 +196,14 @@ at least once per hour.
   The app eats very low amount of resources (about 10 miliCore/24MB in peak)
 
 - incoming decisions are added to the cache in separate loop than items added
-  to the Mikrotik, so there is a an about 10s delay between actual ip ban via
-  csclu and the firwall update on the MikroTik device.
+  to the Mikrotik, so there is a an about 10s delay between actual IP ban via
+  `cscli` and the firewall update on the MikroTik device.
+
+- there is no graceful shutdown,
+  in worst case address-list is half populated but not applied to firewall,
+  or applied only to for example IPv4 (or IPv6),
+  so the old address list is still active, and when the new process spawns then
+  it will create a new list anyway
 
 ### TODO
 
@@ -147,7 +212,7 @@ at least once per hour.
 - double check if there is an error after adding address, then if we try to
   update fw rule to new list:
   - if change to new list then it may be truncated ( missing entries)
-  - if we keep to old list or dont add new list, then things can expire
+  - if we keep to old list or don't add new list, then things can expire
 
 - periodically ask MikroTik for `ip firewall address-list count-only` and make
   metric from it?
@@ -157,16 +222,9 @@ at least once per hour.
 
 - panic on no route to host in docker-compose up :D
 
-### Not To do
-
-- graceful shutdown, so that adding addresses and firewall is finished?
-  not needed, in worst case address-list is half populated but not applied to firewall,
-  so the old address list is still active, and when the new process spawns then
-  it will create a new list.
-
 ## Running
 
-For now, this service is mainly fought to be used in as an app in a container.
+For now, this service is mainly thought to be used in as an app in a container.
 If you need to build from source, you can get some inspiration from the Makefile
 or section below.
 
@@ -174,7 +232,7 @@ or section below.
 
 You should have a MikroTik appliance and a CrowdSec instance running.
 The container is available as docker image under [quay.io/kaszpir/cs-mikrotik-bouncer-alt](https://quay.io/kaszpir/cs-mikrotik-bouncer-alt).
-The running contaner must have access to CrowdSec and to MikroTik.
+The running container must have access to CrowdSec and to MikroTik.
 
 # Configuration
 
@@ -354,11 +412,11 @@ device and CrowdSec endpoint. See section below.
 
 # Deployment
 
-Only Linux deployments were tested.
+Only Linux deployments were tested as golang binary or containers.
 
 ## Locally
 
-Make sure to have a golang installed locally, edit .env file and then
+Make sure to have a golang installed locally, edit `.env` file and then
 
 ```shell
 export $(cat .env | xargs)
@@ -376,7 +434,7 @@ copy .env file there and start bouncer with `docker compose up` and investigate 
 Kustomization files in [kubernetes](./deploy/k8s/) via [kustomize](https://kustomize.io/)
 with optional ServiceMonitor for automatic metric collections via Prometheus Operator.
 
-I suggest to deploy a bouncer  in a separate namespace for each target MikroTik device.
+I suggest to deploy a bouncer in a separate namespace for each target MikroTik device.
 
 If needed change in ServiceMonitor relabelings if you want to distinguish bouncers
 in grafana (not implemented yet in the dashboard)
@@ -488,12 +546,12 @@ The bouncer configuration is made via environment variables:
   or from incoming CrowdSec decisions, but on MikroTik it will have 4h.
 
   Yet it is good to quickly expire old address-lists automatically, because
-  new ones will come in with refreshed entries for the same address ips to block.
+  new ones will come in with refreshed entries for the same address IPs to block.
 
   Because CrowdSec publishes new lists at least once an hour then that address
   will be readded to the new list every hour until expires.
 
-  This helps to avoid having thousands addresses in hundrets address-lists in
+  This helps to avoid having thousands addresses in hundreds address-lists in
   the MikroTik.
 
   Recommended value is at least 3x longer than the frequency you get updates from
@@ -505,7 +563,7 @@ The bouncer configuration is made via environment variables:
   Must be longer than `MIKROTIK_UPDATE_FREQUENCY`.
 
 - `TRIGGER_ON_UPDATE` - default value: `true`, optional,
-  if you set it to true, then trigger mikrotik address-list and firewall update immediately
+  if you set it to true, then trigger MikroTik address-list and firewall update immediately
   (well, usually in about 5s).
 
   This makes ban added from other tools being applied faster, but for the
@@ -538,7 +596,7 @@ Most important ones:
 
 - `mikrotik_cmd_total{result="error"}` - number of errors when trying to communicate with MikroTik
 
-- `mikrotik_cmd_total{result="success"}` - number of commands succesfully executed on MikroTik
+- `mikrotik_cmd_total{result="success"}` - number of commands successfully executed on MikroTik
 
 - `decisions_total{}` - processed incoming CrowdSec decisions to block/unblock addresses
 
