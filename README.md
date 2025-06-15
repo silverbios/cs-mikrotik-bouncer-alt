@@ -575,6 +575,14 @@ The bouncer configuration is made via environment variables:
   of the `MIKROTIK_UPDATE_FREQUENCY` is executed, so on default settings it may
   take up to 1h before address is banned.
 
+- `TICKER_INTERVAL` - default value: `10s`, optional
+  how frequently process streamed decisions from CrowdSec LAPI,
+  the best if this is as close to the total time used to update MikroTik
+  address lists and firewall as possible.
+  If you get frequent delays in acquiring lock then try to increase this value
+  to for example `30s` or `60s`. Notice this is a golang [time.Duration](https://pkg.go.dev/time#Duration)
+  format, but the value cannot be equal or less than `0s`.
+
 - `GOMAXPROCS` - default value: `` (automatic number of processors), optional,
   Set default processes to use by golang app, especially useful to prevent it
   from getting excessively throttled in the containers,

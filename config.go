@@ -60,6 +60,12 @@ var (
 	triggerOnUpdate bool
 	//mikrotik update frequency to process create new address list and update firewall
 	updateFreq time.Duration
+
+	// how frequently process streamed decisions from CrowdSec LAPI
+	// the best if this is as close to the total time used to update MikroTik
+	// address lists and firewall as possible
+	// if you get frequent delays in acquiring lock then try to increase this value
+	tickerInterval time.Duration
 )
 
 func initConfig() {
@@ -232,6 +238,25 @@ func initConfig() {
 	viper.SetDefault("trigger_on_update", "true")
 	triggerOnUpdate = viper.GetBool("trigger_on_update")
 
+	viper.BindEnv("ticker_interval")
+	viper.SetDefault("ticker_interval", "10s")
+	tickerInterval = viper.GetDuration("ticker_interval")
+	tickerIntervalD, err := time.ParseDuration(tickerInterval.String())
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Str("func", "config").
+			Str("ticker_interval", viper.GetString("ticker_interval")).
+			Msg("ticker_interval value is invalid ")
+	}
+	if tickerInterval <= 0*time.Second {
+		log.Fatal().
+			Err(err).
+			Str("func", "config").
+			Str("ticker_interval", viper.GetString("ticker_interval")).
+			Msg("ticker_interval value can not be equal zero or negative")
+	}
+
 	all := viper.AllSettings()
 
 	safeConfig := map[string]any{}
@@ -254,6 +279,9 @@ func initConfig() {
 	log.Info().
 		Str("func", "config").
 		Msgf("Setting mikrotik_update_requency to %v", updateFreqD)
+	log.Info().
+		Str("func", "config").
+		Msgf("Setting ticker_interval to %v", tickerIntervalD)
 
 }
 
