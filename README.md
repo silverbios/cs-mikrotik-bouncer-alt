@@ -525,10 +525,6 @@ The bouncer configuration is made via environment variables:
   set timeout when trying to connect to the MikroTik,
   recommended to keep it under `60s`
 
-- `MIKROTIK_TIMEOUT` - default value: `10s`, optional,
-  set timeout when trying to connect to the MikroTik,
-  recommended to keep it under `60s`
-
 - `MIKROTIK_UPDATE_FREQUENCY` - default value: `1h`, optional,
   Set default frequency to update MikroTik address-lists and firewall rules.
 
