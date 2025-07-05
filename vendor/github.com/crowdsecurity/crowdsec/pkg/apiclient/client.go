@@ -26,6 +26,8 @@ var (
 	lapiClient         *ApiClient
 )
 
+type TokenSave func(ctx context.Context, tokenKey string, token string) error
+
 type ApiClient struct {
 	/*The http client used to make requests*/
 	client *http.Client
@@ -48,12 +50,12 @@ type ApiClient struct {
 	UsageMetrics   *UsageMetricsService
 }
 
-func (a *ApiClient) GetClient() *http.Client {
-	return a.client
+func (c *ApiClient) GetClient() *http.Client {
+	return c.client
 }
 
-func (a *ApiClient) IsEnrolled() bool {
-	jwtTransport := a.client.Transport.(*JWTTransport)
+func (c *ApiClient) IsEnrolled() bool {
+	jwtTransport := c.client.Transport.(*JWTTransport)
 	tokenStr := jwtTransport.Token
 
 	token, _ := jwt.Parse(tokenStr, nil)
@@ -65,6 +67,29 @@ func (a *ApiClient) IsEnrolled() bool {
 	_, ok := claims["organization_id"]
 
 	return ok
+}
+
+func (c *ApiClient) GetSubscriptionType() string {
+	jwtTransport := c.client.Transport.(*JWTTransport)
+	tokenStr := jwtTransport.Token
+
+	token, _ := jwt.Parse(tokenStr, nil)
+	if token == nil {
+		return ""
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	subscriptionType, ok := claims["subscription_type"].(string)
+	if ok {
+		return subscriptionType
+	}
+
+	return ""
+}
+
+func (c *ApiClient) GetTokenRefreshChan() chan struct{} {
+	jwtTransport := c.client.Transport.(*JWTTransport)
+	return jwtTransport.TokenRefreshChan
 }
 
 type service struct {
@@ -87,7 +112,6 @@ func InitLAPIClient(ctx context.Context, apiUrl string, papiUrl string, login st
 	client, err := NewClient(&Config{
 		MachineID:     login,
 		Password:      pwd,
-		Scenarios:     scenarios,
 		URL:           apiURL,
 		PapiURL:       papiURL,
 		VersionPrefix: "v1",
@@ -138,7 +162,6 @@ func NewClient(config *Config) (*ApiClient, error) {
 	t := &JWTTransport{
 		MachineID:      &config.MachineID,
 		Password:       &config.Password,
-		Scenarios:      config.Scenarios,
 		UserAgent:      userAgent,
 		VersionPrefix:  config.VersionPrefix,
 		UpdateScenario: config.UpdateScenario,
@@ -149,6 +172,8 @@ func NewClient(config *Config) (*ApiClient, error) {
 			WithStatusCodeConfig(http.StatusServiceUnavailable, 5, true, false),
 			WithStatusCodeConfig(http.StatusGatewayTimeout, 5, true, false),
 		),
+		TokenSave:        config.TokenSave,
+		TokenRefreshChan: make(chan struct{}),
 	}
 
 	transport, baseURL := createTransport(config.URL)
