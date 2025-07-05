@@ -14,4 +14,4 @@ secretGenerator:
       - .env
 images:
   - name: quay.io/kaszpir/cs-mikrotik-bouncer-alt
-    newTag: v0.4.1
+    newTag: v0.6.0
