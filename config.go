@@ -40,12 +40,20 @@ var (
 	// set to true if you want to use maxTTL
 	useMaxTTL bool
 
-	srcFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for source rules
-	srcFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for source rules
-	dstFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for destination rules
-	dstFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for destination rules
-	logLevel               string // 0=debug, 1=info
-	metricsAddr            string // prometheus listen address
+	enableFirewallFilter bool   // enable updating firewall filter rules
+	srcFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for source rules
+	srcFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for source rules
+	dstFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for destination rules
+	dstFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for destination rules
+
+	enableFirewallRaw bool   // enable updating firewall raw rules
+	srcRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for source rules
+	srcRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for source rules
+	dstRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for destination rules
+	dstRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for destination rules
+
+	logLevel    string // 0=debug, 1=info
+	metricsAddr string // prometheus listen address
 
 	mikrotikHost string        // address of the mikrotik device
 	password     string        // mikrotik api password
@@ -131,6 +139,14 @@ func initConfig() {
 	viper.SetDefault("mikrotik_ipv6", "true")
 	useIPV6 = viper.GetBool("mikrotik_ipv6")
 
+	viper.BindEnv("mikrotik_firewall_filter_enable")
+	viper.SetDefault("mikrotik_firewall_filter_enable", "true")
+	enableFirewallFilter = viper.GetBool("mikrotik_firewall_filter_enable")
+
+	viper.BindEnv("mikrotik_firewall_raw_enable")
+	viper.SetDefault("mikrotik_firewall_raw_enable", "true")
+	enableFirewallRaw = viper.GetBool("mikrotik_firewall_raw_enable")
+
 	viper.BindEnv("mikrotik_address_list")
 	viper.SetDefault("mikrotik_address_list", "crowdsec")
 	addressList = viper.GetString("mikrotik_address_list")
@@ -141,14 +157,25 @@ func initConfig() {
 	}
 
 	if useIPV4 {
-		srcFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_src")
-		dstFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_dst")
-
+		if enableFirewallFilter {
+			srcFilterRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_filter_rules_src")
+			dstFilterRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_filter_rules_dst")
+		}
+		if enableFirewallRaw {
+			srcRawRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_raw_rules_src")
+			dstRawRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_raw_rules_dst")
+		}
 	}
 
 	if useIPV6 {
-		srcFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_src")
-		dstFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_dst")
+		if enableFirewallFilter {
+			srcFilterRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_filter_rules_src")
+			dstFilterRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_filter_rules_dst")
+		}
+		if enableFirewallRaw {
+			srcRawRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_raw_rules_src")
+			dstRawRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_raw_rules_dst")
+		}
 	}
 
 	viper.BindEnv("mikrotik_timeout")
@@ -264,9 +291,11 @@ func initConfig() {
 	safeConfig["mikrotik_pass"] = fmt.Sprintf("%.*s...", 3, password)
 	safeConfig["crowdsec_bouncer_api_key"] = fmt.Sprintf("%.*s...", 3, crowdsecBouncerAPIKey)
 
-	log.Info().
-		Str("func", "config").
-		Msgf("Using config: %v", safeConfig)
+	for key, val := range safeConfig {
+		log.Info().
+			Str("func", "config").
+			Msgf("Using config: %v=%v", key, val)
+	}
 	log.Info().
 		Str("func", "config").
 		Msgf("Setting default TTL to %v", defaultTTLD)

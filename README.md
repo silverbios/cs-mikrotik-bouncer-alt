@@ -181,6 +181,10 @@ at least once per hour.
 
 - designed to run in container without any privileges, read only container
 
+- allow specifying blocking on the `filter firewall` or `filter raw` rules.
+  Using `filter raw` is faster and more performant, but it may not suit
+  all scenarios, see below for more details.
+
 - prometheus metrics, which allows you to use grafana dashboards
 
 ![grafana_dashboard_1](./docs/assets/grafana_dashboard_1-fs8.png)
@@ -253,7 +257,27 @@ Add user to MikroTik to allow access via RouterOS API.
 
 Remember to filter out access for the created user for given address only etc.
 
-### IPv6 firewall rules
+### Firewall - filter or raw
+
+There is a difference between `firewall filter` and `firewall raw`, they serve
+different purposes and require differeent computing powers
+(in short `filter` is computationally heavier than `raw`).
+
+- raw drops packets as early as possible, and they are stateless
+- using raw rules should be done only when dealing with specific use cases such
+  as DDOS (crowdsec is not really good at it, though)
+- raw is processed before filter rules, so it can save resources such as cpu
+  and memory, especially if you are hitting device limits
+- filter works after some other rules, like connection tracking
+  and thus they are stateful and allow better manipulation of certain use cases
+
+Which one to choose?
+
+- try `filter` first
+- if the resource suffer such as hitting limits of the cpu/memory of the device
+  then try also enabling `raw`
+
+### IPv6 firewall filter rules
 
 For IPv6 - create IPv6 'drop' filter rules in `input` and `forward`
 chain with the source address list set to `crowdsec` at the top.
@@ -318,7 +342,7 @@ place-before=1 comment="crowdsec forward drop rules - src"
 
 ```
 
-### List firewall rules
+### List firewall filter rules
 
 Get the list of firewall rules which were added, this will be needed later.
 
@@ -361,8 +385,8 @@ Flags: X - disabled, I - invalid; D - dynamic
 
 then:
 
-- `IP_FIREWALL_RULES_SRC` would be `1,2`
-- `IP_FIREWALL_RULES_DST` would be `3,4`
+- `IP_FIREWALL_FILTER_RULES_SRC` would be `1,2`
+- `IP_FIREWALL_FILTER_RULES_DST` would be `3,4`
 
 Similar, for IPv6:
 
@@ -390,8 +414,115 @@ Flags: X - disabled, I - invalid; D - dynamic
 
 then:
 
-- `IPV6_FIREWALL_RULES_SRC` would be `0,1`
-- `IPV6_FIREWALL_RULES_DST` would be `2,3`
+- `IPV6_FIREWALL_FILTER_RULES_SRC` would be `0,1`
+- `IPV6_FIREWALL_FILTER_RULES_DST` would be `2,3`
+
+### IPv6 firewall raw rules
+
+For IPv6 - create IPv6 'drop' filter rules in `prerouting` and `output`
+chain with the source/destination address list set to `crowdsec` at the top.
+
+Below are snippets to use, make sure to replace `ether1` with your desired interface.
+Notice that if you use `place-before=0` then the order below is important,
+and for `dst-address-list` we do not define interface.
+
+```shell
+/ipv6 firewall raw \
+add action=drop src-address-list=crowdsec chain=prerouting \
+in-interface=ether1 \
+place-before=0 comment="crowdsec prerouting drop rules - src"
+
+/ipv6 firewall raw \
+add action=drop dst-address-list=crowdsec chain=output \
+place-before=0 comment="crowdsec output drop rules - dst"
+
+```
+
+The best would be to add them just after default `bad_ipv6` rules.
+
+### IPv4 firewall raw rules
+
+For IPv4 - create IP `drop` filter rules in `prerouting` and `output` chain with the
+source/destination address list set to `crowdsec` at the top or just before
+generic packet counter rule.
+
+Below are snippets to use, make sure to replace `ether1` with your desired interface,
+assuming that rule 0 is a dummy passthrough for packet counting added by default
+to MikroTik, and rule 1 is whatever but we want to insert CrowdSec before it.
+Notice that if you use `place-before=1` then the order below is important,
+and for `dst-address-list` we do not define interface.
+
+```shell
+/ip firewall raw \
+add action=drop src-address-list=crowdsec chain=prerouting \
+in-interface=ether1 \
+place-before=0 comment="crowdsec prerouting drop rules - src"
+
+/ip firewall raw \
+add action=drop dst-address-list=crowdsec chain=output \
+place-before=0 comment="crowdsec output drop rules - dst"
+
+```
+
+### List firewall raw rules
+
+Get the list of firewall rules which were added, this will be needed later.
+
+```shell
+/ip firewall raw print without-paging
+
+/ipv6 firewall raw print without-paging
+```
+
+Write down numbers of the rules on the most left column.
+
+For example for IPv4:
+
+```text
+> /ip firewall raw print without-paging  
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0  D ;;; special dummy rule to show fasttrack counters
+      chain=prerouting action=passthrough 
+
+ 1 X  ;;; crowdsec raw prerouting
+      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec 
+
+ 2 X  ;;; crowdsec output
+      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec 
+
+```
+
+then:
+
+- `IP_FIREWALL_RAW_RULES_DST` would be `2` (output)
+- `IP_FIREWALL_RAW_RULES_SRC` would be `1` (prerouting)
+
+Similar, for IPv6:
+
+```text
+> /ipv6 firewall raw print without-paging       
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0 X  ;;; crowdsec prerouting
+      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec 
+
+ 1 X  ;;; crowdsec output
+      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec
+
+```
+
+then:
+
+- `IPV6_FIREWALL_RAW_RULES_DST` would be `1` (output)
+- `IPV6_FIREWALL_RAW_RULES_SRC` would be `0` (prerouting)
+
+### Testing if it works
+
+To avoid unexpected issues it is advised to change the new rules to `passthrough`
+so that you can see the number of packets that got through it.
+
+Additional logging should help in checking if the setup works as expected.
+
+If it works then change rules to `drop` one by one.
 
 ### Prepare config for the app
 
@@ -492,28 +623,54 @@ The bouncer configuration is made via environment variables:
 - `MIKROTIK_IPV4` - default value: `true`, optional,
   IPv4 support, set to `true` to enable processing IPv4 blocklists
 
-- `IP_FIREWALL_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
-  comma separated numbers of IPv4 firewall rules to update on access-list change,
-  and to set src-address-list in it,
-  those are created during configuration, for example `1,2` (input,forward)
-
-- `IP_FIREWALL_RULES_DST` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
-  comma separated numbers of IPv4 firewall rules to update on access-list change,
-  and to set dst-address-list in it,
-  those are created during configuration, for example `3,4` (input,forward)
-
 - `MIKROTIK_IPV6` - default value: `true`,  optional,
   IPv6 support, set to `true` to enable processing IPv6 blocklists
 
-- `IPV6_FIREWALL_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
-  comma separated numbers of IPv6 firewall rules to update on access-list change,
-  and to set src-address-list in it,
-  those are created during configuration , for example `0,1` (input,forward)
+- `MIKROTIK_FIREWALL_FILTER_ENABLE` - default value: `true`, optional,
+  enable updating firewall filter rules (filter input, forward, output)
 
-- `IPV6_FIREWALL_RULES_DST` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
-  comma separated numbers of IPv6 firewall rules to update on access-list change,
+- `IP_FIREWALL_FILTER_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
+  comma separated numbers of IPv4 firewall filter rules to update on access-list change,
+  and to set src-address-list in it,
+  those are created during configuration, for example `1,2` (filter input, forward, output)
+
+- `IP_FIREWALL_FILTER_RULES_DST` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
+  comma separated numbers of IPv4 firewall filter rules to update on access-list change,
   and to set dst-address-list in it,
-  those are created during configuration , for example `2,3` (input,forward)
+  those are created during configuration, for example `3,4` (filter input, forward, output)
+
+- `IPV6_FIREWALL_FILTER_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
+  comma separated numbers of IPv6 firewall filter rules to update on access-list change,
+  and to set src-address-list in it,
+  those are created during configuration , for example `0,1` (filter input, forward, output)
+
+- `IPV6_FIREWALL_FILTER_RULES_DST` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
+  comma separated numbers of IPv6 firewall filter rules to update on access-list change,
+  and to set dst-address-list in it,
+  those are created during configuration , for example `2,3` (filter input, forward, output)
+
+- `MIKROTIK_FIREWALL_RAW_ENABLE` - default value: `true`, optional,
+  enable updating firewall raw rules (raw prerouting, output)
+
+- `IP_FIREWALL_RAW_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
+  comma separated numbers of IPv4 firewall raw rules to update on access-list change,
+  and to set src-address-list in it,
+  those are created during configuration, for example `1` (raw prerouting, output)
+
+- `IP_FIREWALL_RAW_RULES_DST` - default value: ``, required if `MIKROTIK_IPV4` is set to true,
+  comma separated numbers of IPv4 firewall raw rules to update on access-list change,
+  and to set dst-address-list in it,
+  those are created during configuration, for example `2` (raw prerouting, output)
+
+- `IPV6_FIREWALL_RAW_RULES_SRC` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
+  comma separated numbers of IPv6 firewall raw rules to update on access-list change,
+  and to set src-address-list in it,
+  those are created during configuration , for example `0` (raw prerouting, output)
+
+- `IPV6_FIREWALL_RAW_RULES_DST` - default value: ``, required if `MIKROTIK_IPV6` is set to true,
+  comma separated numbers of IPv6 firewall raw rules to update on access-list change,
+  and to set dst-address-list in it,
+  those are created during configuration , for example `1` (raw prerouting, output)
 
 - `MIKROTIK_ADDRESS_LIST` - default value: `crowdsec`, optional,
   prefix for target address-list in MikroTik device, no special chars,
