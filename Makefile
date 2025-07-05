@@ -16,6 +16,10 @@ version: ## show git version
 debug: build ## run debug locally, loads env vars from .env
 	export $$(cat .env | xargs) && ./cs-mikrotik-bouncer-alt 2>&1| tee  out-$$(date +"%Y-%m-%d_%H-%M").log
 
+.PHONY: full
+full: build ## run full setup locally, loads env vars from .env.full
+	export $$(cat .env.full | xargs) && ./cs-mikrotik-bouncer-alt 2>&1| tee  out-$$(date +"%Y-%m-%d_%H-%M").log
+
 
 .PHONY: image
 image: ## build images
