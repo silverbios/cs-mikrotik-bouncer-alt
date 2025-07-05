@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"runtime/debug"
 	"sync"
 
 	"github.com/go-routeros/routeros/v3"
@@ -25,7 +27,45 @@ type mikrotikAddrList struct {
 	mutex sync.Mutex
 }
 
+// inspired by https://www.piotrbelina.com/blog/go-build-info-debug-readbuildinfo-ldflags/
+var GitCommit = "NOCOMMIT"
+var GoVersion = runtime.Version()
+var BuildDate = ""
+
+func initVersion() {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		log.Error().
+			Str("func", "initVersion").
+			Msg("Failed to process build info")
+		return
+	}
+	modified := false
+	for _, setting := range info.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			GitCommit = setting.Value
+		case "vcs.time":
+			BuildDate = setting.Value
+		case "vcs.modified":
+			modified = true
+		}
+	}
+	if modified {
+		GitCommit += "+CHANGES"
+	}
+}
+
 func main() {
+
+	initVersion()
+
+	log.Info().
+		Str("func", "build").
+		Str("revision", GitCommit).
+		Str("go_version", GoVersion).
+		Str("build_date", BuildDate).
+		Msg("Build info")
 
 	initConfig()
 

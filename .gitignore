@@ -1,3 +1,4 @@
 .env
 *.log
 .vscode/
+cs-mikrotik-bouncer-alt

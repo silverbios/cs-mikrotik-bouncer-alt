@@ -13,8 +13,8 @@ version: ## show git version
 	@echo GIT_COMMIT IS $(GIT_COMMIT)
 
 .PHONY: debug
-debug: ## run debug locally, loads env vars from .env
-	export $$(cat .env | xargs) && go run . 2>&1| tee  out-$$(date +"%Y-%m-%d_%H-%M").log
+debug: build ## run debug locally, loads env vars from .env
+	export $$(cat .env | xargs) && ./cs-mikrotik-bouncer-alt 2>&1| tee  out-$$(date +"%Y-%m-%d_%H-%M").log
 
 
 .PHONY: image
@@ -30,4 +30,8 @@ update: ## update golang deps
 	go get -u
 	go mod tidy
 	go mod vendor
+
+.PHONY: build
+build: ## build binary into ./cs-mikrotik-bouncer-alt
+	go build -o ./cs-mikrotik-bouncer-alt
 
