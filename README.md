@@ -519,7 +519,7 @@ The bouncer configuration is made via environment variables:
   prefix for target address-list in MikroTik device, no special chars,
   no spaces etc, generated name will be with a timestamp suffix,
   if you set it to `crowdsec` then access-list will be named as
-  `crowdsec_2025-05-19_15-01-09` or something like it (UTC),
+  `crowdsec_2025-05-19_15-01-09` or something like it (local time),
 
 - `MIKROTIK_TIMEOUT` - default value: `10s`, optional,
   set timeout when trying to connect to the MikroTik,
