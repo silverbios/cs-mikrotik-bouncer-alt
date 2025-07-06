@@ -72,27 +72,27 @@ func runMikrotikCommands(mal *mikrotikAddrList) {
 		}
 	}
 
-	if useIPV4 {
-		// TODO: do something with the errors?
-		_ = mal.setAddressListInFilter("ip", listName, srcFirewallRuleIdsIPv4, "src")
-		_ = mal.setAddressListInFilter("ip", listName, dstFirewallRuleIdsIPv4, "dst")
+	// if useIPV4 {
+	// 	// TODO: do something with the errors?
+	// 	_ = mal.setAddressListInFilter("ip", listName, srcFirewallRuleIdsIPv4, "src")
+	// 	_ = mal.setAddressListInFilter("ip", listName, dstFirewallRuleIdsIPv4, "dst")
 
-	} else {
-		log.Debug().
-			Str("func", "runMikrotikCommands").
-			Str("list_name", listName).
-			Msgf("Skipping setAddressListInFilter, because IPv4 support is disabled")
-	}
+	// } else {
+	// 	log.Debug().
+	// 		Str("func", "runMikrotikCommands").
+	// 		Str("list_name", listName).
+	// 		Msgf("Skipping setAddressListInFilter, because IPv4 support is disabled")
+	// }
 
-	if useIPV6 {
-		_ = mal.setAddressListInFilter("ipv6", listName, srcFirewallRuleIdsIPv6, "src")
-		_ = mal.setAddressListInFilter("ipv6", listName, dstFirewallRuleIdsIPv6, "dst")
-	} else {
-		log.Debug().
-			Str("func", "runMikrotikCommands").
-			Str("list_name", listName).
-			Msgf("Skipping setAddressListInFilter, because IPv6 support is disabled")
-	}
+	// if useIPV6 {
+	// 	_ = mal.setAddressListInFilter("ipv6", listName, srcFirewallRuleIdsIPv6, "src")
+	// 	_ = mal.setAddressListInFilter("ipv6", listName, dstFirewallRuleIdsIPv6, "dst")
+	// } else {
+	// 	log.Debug().
+	// 		Str("func", "runMikrotikCommands").
+	// 		Str("list_name", listName).
+	// 		Msgf("Skipping setAddressListInFilter, because IPv6 support is disabled")
+	// }
 
 }
 
