@@ -3,7 +3,7 @@ version: '3.8'
 services:
   bouncer-mikrotik-dev:
     container_name: bouncer-mikrotik-dev
-    image: quay.io/kaszpir/cs-mikrotik-bouncer-alt:f61c6d8 # unreleased v0.7.0
+    image: quay.io/kaszpir/cs-mikrotik-bouncer-alt:v0.7.0 # unreleased v0.7.0
     env_file: ".env"
     ports:
       - 2112:2112/tcp # default metrics port
