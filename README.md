@@ -485,16 +485,16 @@ Write down numbers of the rules on the most left column.
 For example for IPv4:
 
 ```text
-> /ip firewall raw print without-paging 
-Flags: X - disabled, I - invalid; D - dynamic 
+> /ip firewall raw print without-paging
+Flags: X - disabled, I - invalid; D - dynamic
  0  D ;;; special dummy rule to show fasttrack counters
-      chain=prerouting action=passthrough 
+      chain=prerouting action=passthrough
 
  1    ;;; crowdsec prerouting drop rules - src
-      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec_2025-07-06_12-50-38 
+      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec_2025-07-06_12-50-38
 
  2    ;;; crowdsec output drop rules - dst
-      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec_2025-07-06_12-50-38 
+      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec_2025-07-06_12-50-38
 
  3    ;;; crowdsec prerouting drop rules - dst
       chain=prerouting action=drop log=no log-prefix="" dst-address-list=crowdsec
@@ -510,15 +510,15 @@ Similar, for IPv6:
 
 ```text
 > /ipv6 firewall raw print without-paging
-Flags: X - disabled, I - invalid; D - dynamic 
+Flags: X - disabled, I - invalid; D - dynamic
  0    ;;; crowdsec prerouting drop rules - src
-      chain=prerouting action=drop in-interface=ether1 src-address-list=crowdsec 
+      chain=prerouting action=drop in-interface=ether1 src-address-list=crowdsec
 
  1    ;;; crowdsec prerouting drop rules - dst
-      chain=prerouting action=drop dst-address-list=crowdsec 
+      chain=prerouting action=drop dst-address-list=crowdsec
 
  2    ;;; crowdsec output drop rules - dst
-      chain=output action=drop dst-address-list=crowdsec 
+      chain=output action=drop dst-address-list=crowdsec
 
 
 ```
@@ -572,6 +572,23 @@ go run .
 
 I recommend using [docker-compose](./deploy/docker/docker-compose.yaml),
 copy .env file there and start bouncer with `docker compose up` and investigate errors.
+
+If you want to test observability then run
+
+```shell
+cd deploy/docker
+docker compose -f docker-compose-stack.yaml up
+```
+
+and it will spawn minimal example of the bouncer, prometheus and grafana with an imported
+dashboard.
+
+- [bouncer](http://127.0.0.1:2112/metrics)
+- [prometheus](http://127.0.0.1:9090)
+- [grafana](http://127.0.0.1:3000) user:pass `admin:admin`
+
+The dasboard is imported only on grafana start so you can trigger containre restart to reload
+the symlinked dashboard.
 
 ## Kubernetes
 

@@ -1,8 +1,8 @@
 ---
 version: '3.8'
 services:
-  bouncer-mikrotik-dev:
-    container_name: bouncer-mikrotik-dev
+  bouncer-mikrotik:
+    container_name: bouncer-mikrotik
     image: quay.io/kaszpir/cs-mikrotik-bouncer-alt:latest
     env_file: ".env"
     ports:
