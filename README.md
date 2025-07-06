@@ -479,16 +479,16 @@ Write down numbers of the rules on the most left column.
 For example for IPv4:
 
 ```text
-> /ip firewall raw print without-paging  
-Flags: X - disabled, I - invalid; D - dynamic 
+> /ip firewall raw print without-paging
+Flags: X - disabled, I - invalid; D - dynamic
  0  D ;;; special dummy rule to show fasttrack counters
-      chain=prerouting action=passthrough 
+      chain=prerouting action=passthrough
 
  1 X  ;;; crowdsec raw prerouting
-      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec 
+      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec
 
  2 X  ;;; crowdsec output
-      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec 
+      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec
 
 ```
 
@@ -500,10 +500,10 @@ then:
 Similar, for IPv6:
 
 ```text
-> /ipv6 firewall raw print without-paging       
-Flags: X - disabled, I - invalid; D - dynamic 
+> /ipv6 firewall raw print without-paging
+Flags: X - disabled, I - invalid; D - dynamic
  0 X  ;;; crowdsec prerouting
-      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec 
+      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec
 
  1 X  ;;; crowdsec output
       chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec
@@ -746,7 +746,7 @@ The bouncer configuration is made via environment variables:
   exposed under `/metrics` path, without authorization (not implemented).
 
 - `TZ` - default value: ``, optional,
-  set desired timezone, otherwise if empty then it will take local time from 
+  set desired timezone, otherwise if empty then it will take local time from
   the machine it runs on. It affects logging and name of the address-list
   suffix created on the MikroTik device. Example `UTC` or `Europe/Warsaw`.
 
@@ -789,7 +789,7 @@ due to various reasons.
 
 Feel free to maintain your own fork :)
 
-# Development
+## Local Development
 
 copy `env.dist` as `.env` and edit its values, then run:
 
@@ -830,3 +830,16 @@ docker-compose up
 /ipv6 firewall address-list remove [find where list~"^crowdsec.*"]
 
 ```
+
+## Release
+
+### Preparation
+
+- before release run `make image` locally, will build and push image to quay
+- test image for few hours.
+
+### Actual Release
+
+- merge to master/main
+- push tag - will trigger github action of building image
+- prepare github release with details, especially about breaking changes
