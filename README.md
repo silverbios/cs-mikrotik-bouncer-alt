@@ -806,11 +806,18 @@ export $(cat .env | xargs)
 go run . 2>&1| tee  out-$(date +"%Y-%m-%d_%H-%M").log
 ```
 
-Build image using [ko](https://ko.build/)
+Build binary:
+
+```shell
+make binary
+```
+
+Build image using [ko](https://ko.build/):
 
 ```shell
 export KO_DOCKER_REPO=quay.io/kaszpir/
-ko build -B -t dev --platform=linux/amd64
+make image
+# edit deploy/docker/docker-compose.yaml such as image/tag
 docker-compose up
 ```
 
