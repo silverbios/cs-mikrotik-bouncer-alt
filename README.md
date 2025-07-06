@@ -423,18 +423,21 @@ For IPv6 - create IPv6 'drop' filter rules in `prerouting` and `output`
 chain with the source/destination address list set to `crowdsec` at the top.
 
 Below are snippets to use, make sure to replace `ether1` with your desired interface.
-Notice that if you use `place-before=0` then the order below is important,
-and for `dst-address-list` we do not define interface.
+Notice that if you use `place-before=0` then the order below is important.
 
 ```shell
 /ipv6 firewall raw \
 add action=drop src-address-list=crowdsec chain=prerouting \
 in-interface=ether1 \
-place-before=0 comment="crowdsec prerouting drop rules - src"
+comment="crowdsec prerouting drop rules - src"
+
+/ipv6 firewall raw \
+add action=drop dst-address-list=crowdsec chain=prerouting \
+comment="crowdsec prerouting drop rules - dst"
 
 /ipv6 firewall raw \
 add action=drop dst-address-list=crowdsec chain=output \
-place-before=0 comment="crowdsec output drop rules - dst"
+comment="crowdsec output drop rules - dst"
 
 ```
 
@@ -449,18 +452,21 @@ generic packet counter rule.
 Below are snippets to use, make sure to replace `ether1` with your desired interface,
 assuming that rule 0 is a dummy passthrough for packet counting added by default
 to MikroTik, and rule 1 is whatever but we want to insert CrowdSec before it.
-Notice that if you use `place-before=1` then the order below is important,
-and for `dst-address-list` we do not define interface.
+Notice that if you use `place-before=1` then the order below is important.
 
 ```shell
 /ip firewall raw \
 add action=drop src-address-list=crowdsec chain=prerouting \
 in-interface=ether1 \
-place-before=0 comment="crowdsec prerouting drop rules - src"
+comment="crowdsec prerouting drop rules - src"
+
+/ip firewall raw \
+add action=drop dst-address-list=crowdsec chain=prerouting \
+comment="crowdsec prerouting drop rules - dst"
 
 /ip firewall raw \
 add action=drop dst-address-list=crowdsec chain=output \
-place-before=0 comment="crowdsec output drop rules - dst"
+comment="crowdsec output drop rules - dst"
 
 ```
 
@@ -479,40 +485,47 @@ Write down numbers of the rules on the most left column.
 For example for IPv4:
 
 ```text
-> /ip firewall raw print without-paging
-Flags: X - disabled, I - invalid; D - dynamic
+> /ip firewall raw print without-paging 
+Flags: X - disabled, I - invalid; D - dynamic 
  0  D ;;; special dummy rule to show fasttrack counters
-      chain=prerouting action=passthrough
+      chain=prerouting action=passthrough 
 
- 1 X  ;;; crowdsec raw prerouting
-      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec
+ 1    ;;; crowdsec prerouting drop rules - src
+      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec_2025-07-06_12-50-38 
 
- 2 X  ;;; crowdsec output
-      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec
+ 2    ;;; crowdsec output drop rules - dst
+      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec_2025-07-06_12-50-38 
+
+ 3    ;;; crowdsec prerouting drop rules - dst
+      chain=prerouting action=drop log=no log-prefix="" dst-address-list=crowdsec
 
 ```
 
 then:
 
-- `IP_FIREWALL_RAW_RULES_DST` would be `2` (output)
+- `IP_FIREWALL_RAW_RULES_DST` would be `2,3` (output,prerouting)
 - `IP_FIREWALL_RAW_RULES_SRC` would be `1` (prerouting)
 
 Similar, for IPv6:
 
 ```text
 > /ipv6 firewall raw print without-paging
-Flags: X - disabled, I - invalid; D - dynamic
- 0 X  ;;; crowdsec prerouting
-      chain=prerouting action=drop log=no log-prefix="" src-address-list=crowdsec
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0    ;;; crowdsec prerouting drop rules - src
+      chain=prerouting action=drop in-interface=ether1 src-address-list=crowdsec 
 
- 1 X  ;;; crowdsec output
-      chain=output action=drop log=no log-prefix="" dst-address-list=crowdsec
+ 1    ;;; crowdsec prerouting drop rules - dst
+      chain=prerouting action=drop dst-address-list=crowdsec 
+
+ 2    ;;; crowdsec output drop rules - dst
+      chain=output action=drop dst-address-list=crowdsec 
+
 
 ```
 
 then:
 
-- `IPV6_FIREWALL_RAW_RULES_DST` would be `1` (output)
+- `IPV6_FIREWALL_RAW_RULES_DST` would be `1,2` (output,prerouting)
 - `IPV6_FIREWALL_RAW_RULES_SRC` would be `0` (prerouting)
 
 ### Testing if it works
