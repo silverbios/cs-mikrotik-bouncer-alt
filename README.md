@@ -260,22 +260,26 @@ Remember to filter out access for the created user for given address only etc.
 ### Firewall - filter or raw
 
 There is a difference between `firewall filter` and `firewall raw`, they serve
-different purposes and require differeent computing powers
-(in short `filter` is computationally heavier than `raw`).
+different purposes and require different computing powers - in short `filter`
+is computationally heavier than `raw`, but allows doing more advanced traffic
+filtering such as connection tracking and layer 7 protocol detection.
 
 - raw drops packets as early as possible, and they are stateless
-- using raw rules should be done only when dealing with specific use cases such
-  as DDOS (crowdsec is not really good at it, though)
 - raw is processed before filter rules, so it can save resources such as cpu
   and memory, especially if you are hitting device limits
 - filter works after some other rules, like connection tracking
   and thus they are stateful and allow better manipulation of certain use cases
+- using raw rules only should be done only when dealing with specific use cases
+  such as DDOS (crowdsec is not really good at it, though)
 
 Which one to choose?
 
-- try `filter` first
-- if the resource suffer such as hitting limits of the cpu/memory of the device
-  then try also enabling `raw`
+- by default both are enabled, and first `raw` will drom most of the traffic,
+  thus `filter` shoudl have much less to process and thus not consume that much
+  resources if `raw` is not enabled.
+
+- if the MikroTik device still struggles such as hitting limits of the cpu/memory
+  of the device then try to use `raw` mode only.
 
 ### IPv6 firewall filter rules
 
@@ -715,6 +719,9 @@ The bouncer configuration is made via environment variables:
 - `MIKROTIK_UPDATE_FREQUENCY` - default value: `1h`, optional,
   Set default frequency to update MikroTik address-lists and firewall rules.
 
+  This is useful if you have disabled `TRIGGER_ON_UPDATE`,
+  or enabled `USE_MAX_TTL=true` and set `DEFAULT_TTL_MAX`.
+
 - `USE_MAX_TTL` - default value: `false`, optional,
   Set to `true` if you want to truncate timeout for the address in address-list
   so that your address lists expire faster
@@ -737,17 +744,18 @@ The bouncer configuration is made via environment variables:
   This helps to avoid having thousands addresses in hundreds address-lists in
   the MikroTik.
 
-  Recommended value is at least 3x longer than the frequency you get updates from
+  Recommended value is at least 2x longer than the frequency you get updates from
   the CrowdSec, so on basic setup 4h should be sufficient. For locations with
-  possible network disruptions 8h or 16 would be recommended.
+  possible network disruptions 8h or 16 would be recommended
+  (but then why ban if there is no internet? :) ).
 
   For weaker/older devices it may be better to keep it really low like 2h.
 
   Must be longer than `MIKROTIK_UPDATE_FREQUENCY`.
 
 - `TRIGGER_ON_UPDATE` - default value: `true`, optional,
-  if you set it to true, then trigger MikroTik address-list and firewall update immediately
-  (well, usually in about 5s).
+  if you set it to true, then trigger MikroTik address-list and firewall update
+  immediately (look at `TICKER_INTERVAL` below).
 
   This makes ban added from other tools being applied faster, but for the
   price of creating new address-list and firewall update.
@@ -760,11 +768,23 @@ The bouncer configuration is made via environment variables:
 
 - `TICKER_INTERVAL` - default value: `10s`, optional
   how frequently process streamed decisions from CrowdSec LAPI,
-  the best if this is as close to the total time used to update MikroTik
-  address lists and firewall as possible.
-  If you get frequent delays in acquiring lock then try to increase this value
-  to for example `30s` or `60s`. Notice this is a golang [time.Duration](https://pkg.go.dev/time#Duration)
+
+  Notice this is a golang [time.Duration](https://pkg.go.dev/time#Duration)
   format, but the value cannot be equal or less than `0s`.
+
+  This will vary depending on the current length of the IP addresses
+  to be blocked - so for example if you test with 4k addresses inserted and it
+  takes 10s then adding 20k addresses may take more (let say 25s).
+
+  The best if this is the total time used to update MikroTik
+  address lists and firewall plus about 30% just to prevent bouncer stuck waiting
+  to acquire lock for the update.
+
+  If you get frequent delays in acquiring lock then try to increase this value
+  higher, certain devices are quite slow and they need at least `30s` or `60s`
+  for processing.
+
+  Sometimes it is just better to buy better faster hardware.
 
 - `GOMAXPROCS` - default value: `` (automatic number of processors), optional,
   Set default processes to use by golang app, especially useful to prevent it
