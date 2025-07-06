@@ -48,13 +48,12 @@ spec:
                 - ALL
             readOnlyRootFilesystem: true
             runAsNonRoot: true
-          volumeMounts:
-            - name: timezone  # Another option is to use env var TZ=UTC
-              mountPath: /etc/localtime
-              subPath: UTC
+          # volumeMounts:
+          #   - name: timezone  # notice that env var TZ will override this
+          #     mountPath: /etc/localtime
+          #     subPath: UTC
       terminationGracePeriodSeconds: 30
-      volumes:
-        - name: timezone
-          hostPath:
-            path: /usr/share/zoneinfo
-
+      # volumes:
+      #   - name: timezone
+      #     hostPath:
+      #       path: /usr/share/zoneinfo
