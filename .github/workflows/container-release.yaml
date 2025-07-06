@@ -1,4 +1,4 @@
-name: build and publish container
+name: Build and Publish Container
 
 on:
   push:
@@ -8,33 +8,40 @@ on:
     branches:
       - 'main'
 
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
 env:
+  BUILDKIT_PROGRESS: plain
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  release-container:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.2.2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Login to quay.io
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Login to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
         with:
-          registry: quay.io
-          username: "kaszpir+github_com_nvtkaszpir_cs_mikrotik_bouncer_alt"
-          password: ${{ secrets.auth_token }}
-
-      - name: Install ko
-        uses: imjasonh/setup-ko@v0.9
-        env:
-          KO_DOCKER_REPO: quay.io/kaszpir
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          logout: true
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: cs-mikrotik-bouncer-alt
+          images: ghcr.io/${{ github.repository }}
           sep-tags: ","
           sep-labels: ","
           tags: |
@@ -42,22 +49,26 @@ jobs:
             type=semver,pattern=v{{major}}.{{minor}}
             type=semver,pattern=v{{major}}
 
-
-      - name: Build and Push to quay.io with ko
+      - name: Install ko
+        uses: imjasonh/setup-ko@v0.9
         env:
-          KO_DOCKER_REPO: quay.io/kaszpir
+          KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
+
+      - name: Build and push image with ko
+        env:
+          KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
           TAGS: ${{ steps.meta.outputs.tags }}
           LABELS: ${{ steps.meta.outputs.labels }}
           PLATFORMS: linux/amd64,linux/arm64,linux/arm
         run: |
-
           go mod tidy
-          PTAGS=`echo $TAGS | sed 's/cs-mikrotik-bouncer-alt://g'`
+
+          PTAGS=$(echo "$TAGS" | sed "s|ghcr.io/${IMAGE_NAME}:||g")
           export SOURCE_DATE_EPOCH=$(date +%s)
 
-          echo TAGS=$TAGS
-          echo PTAGS=$PTAGS
-          echo LABELS=$LABELS
-          echo PLATFORMS=$PLATFORMS
+          echo "TAGS=$TAGS"
+          echo "PTAGS=$PTAGS"
+          echo "LABELS=$LABELS"
+          echo "PLATFORMS=$PLATFORMS"
 
           ko build -B --image-label "$LABELS" -t "$PTAGS" --platform=$PLATFORMS .
