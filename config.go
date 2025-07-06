@@ -40,12 +40,12 @@ var (
 	// set to true if you want to use maxTTL
 	useMaxTTL bool
 
-	srcFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for source rules
-	srcFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for source rules
-	dstFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for destination rules
-	dstFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for destination rules
-	logLevel               string // 0=debug, 1=info
-	metricsAddr            string // prometheus listen address
+	//srcFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for source rules
+	//srcFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for source rules
+	//dstFirewallRuleIdsIPv4 string // comma separated firewall rule ids for IPv4 for destination rules
+	//dstFirewallRuleIdsIPv6 string // comma separated firewall rule ids for IPv6 for destination rules
+	logLevel    string // 0=debug, 1=info
+	metricsAddr string // prometheus listen address
 
 	mikrotikHost string        // address of the mikrotik device
 	password     string        // mikrotik api password
@@ -141,14 +141,14 @@ func initConfig() {
 	}
 
 	if useIPV4 {
-		srcFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_src")
-		dstFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_dst")
+		//srcFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_src")
+		//dstFirewallRuleIdsIPv4 = cfgValidateFirewall("ip_firewall_rules_dst")
 
 	}
 
 	if useIPV6 {
-		srcFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_src")
-		dstFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_dst")
+		//srcFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_src")
+		//dstFirewallRuleIdsIPv6 = cfgValidateFirewall("ipv6_firewall_rules_dst")
 	}
 
 	viper.BindEnv("mikrotik_timeout")
