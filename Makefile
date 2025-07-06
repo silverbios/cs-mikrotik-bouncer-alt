@@ -23,7 +23,7 @@ full: build ## run full setup locally, loads env vars from .env.full
 
 .PHONY: image
 image: ## build images
-	ko build -B  --platform=linux/amd64,linux/arm64,linux/arm
+	ko build -B -t  $(GIT_COMMIT) --platform=linux/amd64,linux/arm64,linux/arm
 
 .PHONY: fmt
 fmt: ## go tile formatter
