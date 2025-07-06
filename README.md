@@ -745,6 +745,11 @@ The bouncer configuration is made via environment variables:
   Address to use to start metrics server in Prometheus format, metrics are
   exposed under `/metrics` path, without authorization (not implemented).
 
+- `TZ` - default value: ``, optional,
+  set desired timezone, otherwise if empty then it will take local time from 
+  the machine it runs on. It affects logging and name of the address-list
+  suffix created on the MikroTik device. Example `UTC` or `Europe/Warsaw`.
+
 # Metrics
 
 If running locally see [http://127.0.0.1:2112/metrics](http://127.0.0.1:2112/metrics)
