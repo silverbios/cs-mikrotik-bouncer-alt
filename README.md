@@ -886,6 +886,16 @@ docker-compose up
 /ip firewall address-list remove [find where list~"^crowdsec.*"]
 /ipv6 firewall address-list remove [find where list~"^crowdsec.*"]
 
+# list ALL addresses in address-list, meaning any ip in address lists,
+# public addresses for lan/wan etc
+/ip firewall address-list print count-only
+/ipv6 firewall address-list print count-only
+
+# list ip in given address list (slow, memory/cpu intensive)
+/ip firewall address-list print brief without-paging   where list=crowdsec_2025-07-06_17-02-24
+
+# show just count of the ip addresses in given address list (slow, memory/cpu intensive)
+/ip firewall address-list print brief without-paging  count-only where list=crowdsec_2025-07-06_17-02-24
 ```
 
 ## Release
