@@ -29,6 +29,10 @@ image: ## build images
 fmt: ## go tile formatter
 	go fmt ./...
 
+.PHONY: lint
+lint: fmt ## run golangci-lint
+	golangci-lint run --fix
+
 .PHONY: update
 update: ## update golang deps
 	go get -u
@@ -38,4 +42,3 @@ update: ## update golang deps
 .PHONY: build
 build: ## build binary into ./cs-mikrotik-bouncer-alt
 	go build -o ./cs-mikrotik-bouncer-alt
-

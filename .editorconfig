@@ -23,3 +23,26 @@ indent_size = unset
 [{Makefile,**.mk}]
 # Use tabs for indentation (Makefiles require tabs)
 indent_style = tab
+
+[*.md]
+indent_size = unset
+
+
+[*.go]
+indent_style = tab
+indent_size = 4
+
+[go.{mod,work,work.sum,sum}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset
+
+[{*.yml,*.yaml}]
+indent_size = 2
+
+# Ignore paths
+[vendor/**]
+generated_code = true

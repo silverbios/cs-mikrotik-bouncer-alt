@@ -1,0 +1,48 @@
+---
+# This file configures https://pre-commit.com/
+# to use specific hooks and options.
+
+exclude: "^clusters/bagno/argo-cd/crowdsec/crowdsec/"
+fail_fast: false
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0  # Use the ref you want to point at
+  hooks:
+  - id: check-merge-conflict
+  - id: check-shebang-scripts-are-executable
+    exclude: ^vendor/
+  - id: check-symlinks
+    exclude: ^vendor/
+  - id: end-of-file-fixer
+    exclude: ^vendor/
+  - id: trailing-whitespace
+    exclude: ^vendor/
+  - id: check-json
+    exclude: ^vendor/
+
+- repo: https://github.com/adrienverge/yamllint.git
+  rev: v1.37.0
+  hooks:
+  - id: yamllint
+
+- repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+  rev: '2.7.3'  # pick a git hash / tag to point to
+  hooks:
+  - id: editorconfig-checker
+    alias: ec
+    exclude: ^vendor/
+
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.38.0
+  hooks:
+  - id: markdownlint
+    exclude: ^vendor/
+
+- repo: https://github.com/golangci/golangci-lint
+  rev: v2.2.1
+  hooks:
+  - id: golangci-lint-fmt
+    exclude: ^vendor/
+  - id: golangci-lint-full
+    exclude: ^vendor/

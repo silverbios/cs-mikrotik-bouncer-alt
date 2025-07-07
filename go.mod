@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/crowdsecurity/crowdsec v1.6.9
-	github.com/crowdsecurity/go-cs-bouncer v0.0.16
+	github.com/crowdsecurity/go-cs-bouncer v0.0.17-0.20250707133957-deca82fa1fa5
 	github.com/go-routeros/routeros/v3 v3.0.1
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/prometheus/client_golang v1.22.0

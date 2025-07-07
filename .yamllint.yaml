@@ -1,0 +1,11 @@
+---
+ignore:
+  - vendor
+rules:
+  indentation:
+    indent-sequences: consistent
+  key-duplicates:
+    forbid-duplicated-merge-keys: false
+  line-length:
+    level: warning
+    max: 200

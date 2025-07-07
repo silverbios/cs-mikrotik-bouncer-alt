@@ -120,7 +120,8 @@ func (b *StreamBouncer) Init() error {
 	// update_frequency or however it's called in the .yaml of the specific bouncer
 
 	if b.TickerInterval == "" {
-		log.Warningf("lapi update interval is not defined, using default value of 10s")
+		log.Warning("lapi update interval is not defined, using default value of 10s")
+
 		b.TickerInterval = "10s"
 	}
 
@@ -141,10 +142,11 @@ func (b *StreamBouncer) Init() error {
 	if err != nil {
 		return fmt.Errorf("api client init: %w", err)
 	}
+
 	return nil
 }
 
-func (b *StreamBouncer) Run(ctx context.Context) {
+func (b *StreamBouncer) Run(ctx context.Context) error {
 	ticker := time.NewTicker(b.TickerIntervalDuration)
 
 	b.Opts.Startup = true
@@ -155,6 +157,7 @@ func (b *StreamBouncer) Run(ctx context.Context) {
 		if err != nil {
 			TotalLAPIError.Inc()
 		}
+
 		return data, resp, err
 	}
 
@@ -171,34 +174,37 @@ func (b *StreamBouncer) Run(ctx context.Context) {
 				log.Errorf("failed to connect to LAPI, retrying in 10s: %s", err)
 				select {
 				case <-ctx.Done():
-					// context cancellation, possibly a SIGTERM
-					return
+					return ctx.Err()
 				case <-time.After(10 * time.Second):
 					continue
 				}
 			}
 
-			log.Error(err)
 			// close the stream
 			// this may cause the bouncer to exit
 			close(b.Stream)
-			return
+			return err
 		}
-
-		b.Stream <- data
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case b.Stream <- data:
+		}
 		break
 	}
 
 	b.Opts.Startup = false
+
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case <-ticker.C:
 			data, resp, err := getDecisionStream(ctx)
 			if resp != nil && resp.Response != nil {
 				resp.Response.Body.Close()
 			}
+
 			if err != nil {
 				log.Error(err)
 				continue

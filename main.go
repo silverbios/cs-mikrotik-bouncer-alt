@@ -108,8 +108,11 @@ func main() {
 	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
-		bouncer.Run(ctx)
-		return fmt.Errorf("Bouncer stream halted")
+		err := bouncer.Run(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to run bouncer stream")
+		}
+		return fmt.Errorf("bouncer stream halted")
 	})
 
 	g.Go(func() error {

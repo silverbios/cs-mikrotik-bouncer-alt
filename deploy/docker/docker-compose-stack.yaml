@@ -19,15 +19,15 @@ services:
     image: quay.io/prometheus/prometheus
     # network_mode: host #comment this out and uncomment ports
     ports:
-    - "9090:9090"
+      - "9090:9090"
     volumes:
-    - "./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro"
+      - "./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro"
 
   grafana:
     image: grafana/grafana
     # network_mode: host #comment this out and uncomment ports
     ports:
-    - "3000:3000"
+      - "3000:3000"
     volumes:
-    - "./grafana/dashboards/:/var/lib/grafana/dashboards/:ro"
-    - "./grafana/provisioning/:/etc/grafana/provisioning/:ro"
+      - "./grafana/dashboards/:/var/lib/grafana/dashboards/:ro"
+      - "./grafana/provisioning/:/etc/grafana/provisioning/:ro"

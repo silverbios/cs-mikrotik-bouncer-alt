@@ -18,8 +18,8 @@ github.com/crowdsecurity/crowdsec/pkg/fflag
 github.com/crowdsecurity/crowdsec/pkg/models
 github.com/crowdsecurity/crowdsec/pkg/modelscapi
 github.com/crowdsecurity/crowdsec/pkg/types
-# github.com/crowdsecurity/go-cs-bouncer v0.0.16
-## explicit; go 1.24.1
+# github.com/crowdsecurity/go-cs-bouncer v0.0.17-0.20250707133957-deca82fa1fa5
+## explicit; go 1.24.4
 github.com/crowdsecurity/go-cs-bouncer
 # github.com/crowdsecurity/go-cs-lib v0.0.20
 ## explicit; go 1.23

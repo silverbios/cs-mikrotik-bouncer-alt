@@ -80,7 +80,7 @@ func initConfig() {
 
 	// TODO: allow loading config from file, because using env vars is insecure
 
-	viper.BindEnv("log_format_json")
+	viper.BindEnv("log_format_json") //nolint:errcheck
 	viper.SetDefault("log_format_json", "true")
 	logToJson := viper.GetBool("log_format_json")
 	if !logToJson {
@@ -88,7 +88,7 @@ func initConfig() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	viper.BindEnv("log_level")
+	viper.BindEnv("log_level") //nolint:errcheck
 	viper.SetDefault("log_level", "1")
 	logLevel = viper.GetString("log_level")
 	level, err := zerolog.ParseLevel(logLevel)
@@ -100,18 +100,18 @@ func initConfig() {
 	}
 	zerolog.SetGlobalLevel(level)
 
-	viper.BindEnv("debug_decisions_max")
+	viper.BindEnv("debug_decisions_max") //nolint:errcheck
 	viper.SetDefault("debug_decisions_max", "-1")
 	debugDecisionsMax = viper.GetInt("debug_decisions_max")
 
-	viper.BindEnv("metrics_address")
+	viper.BindEnv("metrics_address") //nolint:errcheck
 	viper.SetDefault("metrics_address", ":2112")
 	metricsAddr = viper.GetString("metrics_address")
 
-	viper.BindEnv("mikrotik_host")
+	viper.BindEnv("mikrotik_host") //nolint:errcheck
 	mikrotikHost = viper.GetString("mikrotik_host")
 
-	viper.BindEnv("mikrotik_user")
+	viper.BindEnv("mikrotik_user") //nolint:errcheck
 	username = viper.GetString("mikrotik_user")
 	if username == "" {
 		log.Fatal().
@@ -119,7 +119,7 @@ func initConfig() {
 			Msg("Mikrotik username is not set")
 	}
 
-	viper.BindEnv("mikrotik_pass")
+	viper.BindEnv("mikrotik_pass") //nolint:errcheck
 	password = viper.GetString("mikrotik_pass")
 	if password == "" {
 		log.Fatal().
@@ -127,27 +127,27 @@ func initConfig() {
 			Msg("Mikrotik password is not set")
 	}
 
-	viper.BindEnv("mikrotik_tls")
+	viper.BindEnv("mikrotik_tls") //nolint:errcheck
 	viper.SetDefault("mikrotik_tls", "true")
 	useTLS = viper.GetBool("mikrotik_tls")
 
-	viper.BindEnv("mikrotik_ipv4")
+	viper.BindEnv("mikrotik_ipv4") //nolint:errcheck
 	viper.SetDefault("mikrotik_ipv4", "true")
 	useIPV4 = viper.GetBool("mikrotik_ipv4")
 
-	viper.BindEnv("mikrotik_ipv6")
+	viper.BindEnv("mikrotik_ipv6") //nolint:errcheck
 	viper.SetDefault("mikrotik_ipv6", "true")
 	useIPV6 = viper.GetBool("mikrotik_ipv6")
 
-	viper.BindEnv("mikrotik_firewall_filter_enable")
+	viper.BindEnv("mikrotik_firewall_filter_enable") //nolint:errcheck
 	viper.SetDefault("mikrotik_firewall_filter_enable", "true")
 	enableFirewallFilter = viper.GetBool("mikrotik_firewall_filter_enable")
 
-	viper.BindEnv("mikrotik_firewall_raw_enable")
+	viper.BindEnv("mikrotik_firewall_raw_enable") //nolint:errcheck
 	viper.SetDefault("mikrotik_firewall_raw_enable", "true")
 	enableFirewallRaw = viper.GetBool("mikrotik_firewall_raw_enable")
 
-	viper.BindEnv("mikrotik_address_list")
+	viper.BindEnv("mikrotik_address_list") //nolint:errcheck
 	viper.SetDefault("mikrotik_address_list", "crowdsec")
 	addressList = viper.GetString("mikrotik_address_list")
 	if addressList == "" {
@@ -178,7 +178,7 @@ func initConfig() {
 		}
 	}
 
-	viper.BindEnv("mikrotik_timeout")
+	viper.BindEnv("mikrotik_timeout") //nolint:errcheck
 	viper.SetDefault("mikrotik_timeout", "10s")
 	timeout = viper.GetDuration("mikrotik_timeout")
 	timeoutD, err := time.ParseDuration(timeout.String())
@@ -190,7 +190,7 @@ func initConfig() {
 			Msg("Failed to parse mikrotik_timeout")
 	}
 
-	viper.BindEnv("mikrotik_update_frequency")
+	viper.BindEnv("mikrotik_update_frequency") //nolint:errcheck
 	viper.SetDefault("mikrotik_update_frequency", "1h")
 	updateFreq = viper.GetDuration("mikrotik_update_frequency")
 	updateFreqD, err := time.ParseDuration(updateFreq.String())
@@ -202,10 +202,10 @@ func initConfig() {
 			Msg("Failed to parse mikrotik_update_frequency")
 	}
 
-	viper.BindEnv("crowdsec_url")
+	viper.BindEnv("crowdsec_url") //nolint:errcheck
 	viper.SetDefault("crowdsec_url", "http://crowdsec:8080/")
 
-	viper.BindEnv("crowdsec_bouncer_api_key")
+	viper.BindEnv("crowdsec_bouncer_api_key") //nolint:errcheck
 	crowdsecBouncerAPIKey = viper.GetString("crowdsec_bouncer_api_key")
 	if crowdsecBouncerAPIKey == "" {
 		log.Fatal().
@@ -213,7 +213,7 @@ func initConfig() {
 			Msg("Crowdsec API key is not set")
 	}
 
-	viper.BindEnv("crowdsec_url")
+	viper.BindEnv("crowdsec_url") //nolint:errcheck
 	crowdsecBouncerURL = viper.GetString("crowdsec_url")
 	if crowdsecBouncerURL == "" {
 		log.Fatal().
@@ -221,11 +221,11 @@ func initConfig() {
 			Msg("Crowdsec LAPI URL is not set")
 	}
 
-	viper.BindEnv("crowdsec_origins")
+	viper.BindEnv("crowdsec_origins") //nolint:errcheck
 	viper.SetDefault("crowdsec_origins", nil)
 	crowdsecOrigins = viper.GetStringSlice("crowdsec_origins")
 
-	viper.BindEnv("default_ttl")
+	viper.BindEnv("default_ttl") //nolint:errcheck
 	viper.SetDefault("default_ttl", "3h")
 	defaultTTL = viper.GetDuration("default_ttl")
 	defaultTTLD, err := time.ParseDuration(defaultTTL.String())
@@ -237,11 +237,11 @@ func initConfig() {
 			Msg("Failed to parse default_ttl")
 	}
 
-	viper.BindEnv("use_max_ttl")
+	viper.BindEnv("use_max_ttl") //nolint:errcheck
 	viper.SetDefault("use_max_ttl", "false")
 	useMaxTTL = viper.GetBool("use_max_ttl")
 
-	viper.BindEnv("default_ttl_max")
+	viper.BindEnv("default_ttl_max") //nolint:errcheck
 	viper.SetDefault("default_ttl_max", "24h")
 	maxTTL = viper.GetDuration("default_ttl_max")
 	maxTTLD, err := time.ParseDuration(maxTTL.String())
@@ -261,11 +261,11 @@ func initConfig() {
 			Msg("default_ttl_max can not be shorter than mikrotik_update_frequency")
 	}
 
-	viper.BindEnv("trigger_on_update")
+	viper.BindEnv("trigger_on_update") //nolint:errcheck
 	viper.SetDefault("trigger_on_update", "true")
 	triggerOnUpdate = viper.GetBool("trigger_on_update")
 
-	viper.BindEnv("ticker_interval")
+	viper.BindEnv("ticker_interval") //nolint:errcheck
 	viper.SetDefault("ticker_interval", "10s")
 	tickerInterval = viper.GetDuration("ticker_interval")
 	tickerIntervalD, err := time.ParseDuration(tickerInterval.String())
@@ -318,7 +318,7 @@ func initConfig() {
 // so just numbers and commas
 func cfgValidateFirewall(name string) string {
 
-	viper.BindEnv(name)
+	viper.BindEnv(name) //nolint:errcheck
 	value := viper.GetString(name)
 
 	if value == "" {

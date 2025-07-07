@@ -415,7 +415,7 @@ Write down numbers of the rules on the most left column.
 
 For example for IPv4:
 
-```text
+```shell
 > /ip firewall filter print without-paging
 
 Flags: X - disabled, I - invalid; D - dynamic
@@ -449,7 +449,7 @@ then:
 
 Similar, for IPv6:
 
-```text
+```shell
 > /ipv6 firewall filter print without-paging
 Flags: X - disabled, I - invalid; D - dynamic
  0    ;;; crowdsec input drop rules - src
@@ -543,7 +543,7 @@ Write down numbers of the rules on the most left column.
 
 For example for IPv4:
 
-```text
+```shell
 > /ip firewall raw print without-paging
 Flags: X - disabled, I - invalid; D - dynamic
  0  D ;;; special dummy rule to show fasttrack counters
@@ -567,7 +567,7 @@ then:
 
 Similar, for IPv6:
 
-```text
+```shell
 > /ipv6 firewall raw print without-paging
 Flags: X - disabled, I - invalid; D - dynamic
  0    ;;; crowdsec prerouting drop rules - src

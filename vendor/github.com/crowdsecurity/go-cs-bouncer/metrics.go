@@ -8,17 +8,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/crowdsecurity/go-cs-lib/version"
-
 	"github.com/crowdsecurity/crowdsec/pkg/apiclient"
 	"github.com/crowdsecurity/crowdsec/pkg/models"
+	"github.com/crowdsecurity/go-cs-lib/version"
 )
 
 type MetricsUpdater func(*models.RemediationComponentsMetrics, time.Duration)
 
-const (
-	defaultMetricsInterval = 15 * time.Minute
-)
+const defaultMetricsInterval = 15 * time.Minute
 
 type MetricsProvider struct {
 	APIClient *apiclient.ApiClient
@@ -36,7 +33,7 @@ type staticMetrics struct {
 	bouncerType  string
 }
 
-// newStaticMetrics should be called once over the lifetime of the program (more if we support hot-reload)
+// newStaticMetrics should be called once over the lifetime of the program (more if we support hot-reload).
 func newStaticMetrics(bouncerType string) staticMetrics {
 	osName, osVersion := version.DetectOS()
 
@@ -125,7 +122,7 @@ func (m *MetricsProvider) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.New("metric provider halted")
+			return ctx.Err()
 		case <-ticker.C:
 			m.sendMetrics(ctx)
 		}

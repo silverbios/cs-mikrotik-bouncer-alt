@@ -61,7 +61,16 @@ func runMikrotikCommands(mal *mikrotikAddrList) {
 		return
 	}
 	mal.c = conn
-	defer mikrotikClose(mal.c)
+
+	defer func() {
+		if errClose := mikrotikClose(mal.c); errClose != nil {
+			log.Error().
+				Str("func", "mikrotikClose").
+				Str("list_name", listName).
+				Msgf("Error closing connection to mikrotik: %v", errClose)
+		}
+	}()
+
 	for _, item := range mal.cache.Items() {
 		address := item.Key()
 		ttl := item.TTL()
