@@ -1,4 +1,41 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": [],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "barchart",
+      "name": "Bar chart",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.5.27"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -26,7 +63,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 2,
   "id": null,
-  "iteration": 1751794112120,
+  "iteration": 1751921612479,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -42,6 +79,451 @@
       "panels": [],
       "title": "General",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Ideally this should be 'no data' or zero",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (func,result)(increase(mikrotik_client_total{result=\"error\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "{{func}} {{operation}} {{result}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Mikrotik client error rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Ideally this should be 'no data' or zero, or should not increase over 3h",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "address_list add error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "address_list add success"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (func,result)(mikrotik_client_total{result=\"error\"})",
+          "hide": false,
+          "legendFormat": "{{func}} {{operation}} {{result}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Mikrotik client error total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "func, operation, result",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (func,result)(mikrotik_client_total{result=\"success\"})",
+          "legendFormat": "{{func}}  {{result}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Mikrotik client success total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "disconnect success"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "connect error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 42,
+      "interval": "1h",
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (func,result)(increase(mikrotik_client_total{result=\"success\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "{{func}} {{result}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (func,result) (increase(mikrotik_client_total{result=\"error\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "{{func}} {{result}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Overview 1h",
+      "type": "barchart"
     },
     {
       "datasource": {
@@ -195,9 +677,9 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 1
+        "y": 8
       },
-      "id": 22,
+      "id": 39,
       "options": {
         "legend": {
           "calcs": [
@@ -380,9 +862,9 @@
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 1
+        "y": 8
       },
-      "id": 36,
+      "id": 40,
       "options": {
         "legend": {
           "calcs": [
@@ -565,9 +1047,9 @@
         "h": 7,
         "w": 6,
         "x": 12,
-        "y": 1
+        "y": 8
       },
-      "id": 21,
+      "id": 41,
       "options": {
         "legend": {
           "calcs": [
@@ -722,9 +1204,9 @@
         "h": 7,
         "w": 6,
         "x": 18,
-        "y": 1
+        "y": 8
       },
-      "id": 7,
+      "id": 43,
       "interval": "1h",
       "options": {
         "barRadius": 0,
@@ -753,6 +1235,7 @@
           },
           "editorMode": "code",
           "expr": "sum (increase(decisions_total[$__rate_interval]))",
+          "hide": false,
           "legendFormat": "decisions",
           "range": true,
           "refId": "A"
@@ -791,7 +1274,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 15
       },
       "id": 27,
       "panels": [],
@@ -950,7 +1433,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 9
+        "y": 16
       },
       "id": 28,
       "options": {
@@ -1135,7 +1618,7 @@
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 9
+        "y": 16
       },
       "id": 13,
       "options": {
@@ -1320,7 +1803,7 @@
         "h": 7,
         "w": 6,
         "x": 12,
-        "y": 9
+        "y": 16
       },
       "id": 24,
       "options": {
@@ -1502,7 +1985,7 @@
         "h": 7,
         "w": 6,
         "x": 18,
-        "y": 9
+        "y": 16
       },
       "id": 25,
       "options": {
@@ -1684,7 +2167,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 16
+        "y": 23
       },
       "id": 29,
       "options": {
@@ -1869,7 +2352,7 @@
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 16
+        "y": 23
       },
       "id": 30,
       "options": {
@@ -2078,7 +2561,7 @@
         "h": 7,
         "w": 6,
         "x": 12,
-        "y": 16
+        "y": 23
       },
       "id": 20,
       "options": {
@@ -2263,7 +2746,7 @@
         "h": 7,
         "w": 6,
         "x": 18,
-        "y": 16
+        "y": 23
       },
       "id": 23,
       "options": {
@@ -2302,7 +2785,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 30
       },
       "id": 11,
       "panels": [],
@@ -2400,7 +2883,7 @@
         "h": 12,
         "w": 6,
         "x": 0,
-        "y": 24
+        "y": 31
       },
       "id": 16,
       "options": {
@@ -2550,7 +3033,7 @@
         "h": 12,
         "w": 6,
         "x": 6,
-        "y": 24
+        "y": 31
       },
       "id": 15,
       "options": {
@@ -2626,7 +3109,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2642,7 +3126,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 36
+        "y": 43
       },
       "id": 31,
       "options": {
@@ -2718,7 +3202,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2734,7 +3219,7 @@
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 36
+        "y": 43
       },
       "id": 32,
       "options": {
@@ -2773,7 +3258,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 50
       },
       "id": 38,
       "panels": [],
@@ -2823,7 +3308,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2839,7 +3325,7 @@
         "h": 10,
         "w": 6,
         "x": 0,
-        "y": 44
+        "y": 51
       },
       "id": 12,
       "options": {
@@ -2915,7 +3401,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2931,7 +3418,7 @@
         "h": 10,
         "w": 6,
         "x": 6,
-        "y": 44
+        "y": 51
       },
       "id": 35,
       "options": {
@@ -2969,7 +3456,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 61
       },
       "id": 4,
       "title": "TTLCache Stats",
@@ -3018,7 +3505,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -3095,7 +3583,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 55
+        "y": 62
       },
       "id": 8,
       "options": {
@@ -3168,7 +3656,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -3245,7 +3734,7 @@
         "h": 9,
         "w": 6,
         "x": 6,
-        "y": 55
+        "y": 62
       },
       "id": 33,
       "options": {
@@ -3318,7 +3807,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -3395,7 +3885,7 @@
         "h": 9,
         "w": 6,
         "x": 12,
-        "y": 55
+        "y": 62
       },
       "id": 6,
       "options": {
@@ -3468,7 +3958,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -3545,7 +4036,7 @@
         "h": 9,
         "w": 6,
         "x": 18,
-        "y": 55
+        "y": 62
       },
       "id": 34,
       "options": {
@@ -3647,6 +4138,6 @@
   "timezone": "",
   "title": "CrowdSec bouncer-mikrotik",
   "uid": "kXpfKJaNk",
-  "version": 50,
+  "version": 51,
   "weekStart": ""
 }

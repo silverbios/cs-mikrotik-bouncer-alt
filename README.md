@@ -242,8 +242,6 @@ See below for more details, which are shared with `crowdsecurity/cs-blocklist-mi
 
 ![grafana_dashboard_1](./docs/assets/grafana_dashboard_1-fs8.png)
 
-![grafana_dashboard_2](./docs/assets/grafana_dashboard_2-fs8.png)
-
 ## Known limitations
 
 - code executes commands against single MikroTik device, this is by design,
