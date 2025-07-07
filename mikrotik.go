@@ -135,9 +135,12 @@ func mikrotikConnect() (*routeros.Client, error) {
 			Bool("useTLS", useTLS).
 			Str("timeout", timeout.String()).
 			Msg("Connecting to mikrotik failed")
+		// error codes are non-existent in github.com/go-routeros/routeros/v3
+		metricMikrotikClient.WithLabelValues("connect", "error").Inc()
 		return nil, err
 	}
-
+	// error codes are non-existent in github.com/go-routeros/routeros/v3
+	metricMikrotikClient.WithLabelValues("connect", "success").Inc()
 	return c, nil
 
 }
@@ -162,8 +165,12 @@ func mikrotikClose(c *routeros.Client) error {
 			Bool("useTLS", useTLS).
 			Str("timeout", timeout.String()).
 			Msg("Closing connection to mikrotik failed.")
+		// error codes are non-existent in github.com/go-routeros/routeros/v3
+		metricMikrotikClient.WithLabelValues("disconnect", "error").Inc()
 		return err
 	}
+	// error codes are non-existent in github.com/go-routeros/routeros/v3
+	metricMikrotikClient.WithLabelValues("disconnect", "success").Inc()
 	return nil
 }
 

@@ -41,6 +41,12 @@ var (
 	},
 		[]string{"proto"},
 	)
+	metricMikrotikClient = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "mikrotik_client_total",
+		Help: "Total number of connection actions executed to mikrotik, such as connect/disconnect",
+	},
+		[]string{"func", "result"},
+	)
 
 	metricMikrotikCmd = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "mikrotik_cmd_total",

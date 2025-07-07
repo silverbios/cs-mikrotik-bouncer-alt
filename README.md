@@ -262,6 +262,8 @@ See below for more details, which are shared with `crowdsecurity/cs-blocklist-mi
   so the old address list is still active, and when the new process spawns then
   it will create a new list anyway
 
+- tested with RouterOS 7.18.2, other versions
+
 ### TODO
 
 - maybe mkdocs + gh pages?
@@ -864,6 +866,10 @@ Some metrics appear after a while.
 [Grafana dashboard](./observability/grafana/CrowdSec_bouncer-mikrotik.json)
 
 Most important ones:
+
+- `mikrotik_client_total{func="connect", result="error"}` - number of errors
+  when trying to log in with MikroTik, especially when trying to connect,
+  see app logs for more details
 
 - `mikrotik_cmd_total{result="error"}` - number of errors when trying to communicate with MikroTik
 
