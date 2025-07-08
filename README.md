@@ -307,7 +307,8 @@ After that prepare config for the bouncer and start the app or container.
 Add user to MikroTik to allow access via RouterOS API.
 
 ```shell
-/user add name=crowdsec-bouncer-user password=hunter2 group=full disabled=no
+/user group add name=crowdsec policy=api,read,write
+/user add name=crowdsec-bouncer-user password=hunter2 group=crowdsec disabled=no
 ```
 
 Remember to filter out access for the created user for given address only etc.
