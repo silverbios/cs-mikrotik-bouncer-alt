@@ -1,0 +1,17 @@
+{
+    "ignorePatterns": [
+        {
+            "pattern": "^quay.io/kaszpir/cs-mikrotik-bouncer-alt"
+        }
+    ],
+    "httpHeaders": [
+        {
+            "urls": [
+                "https://docs.github.com/"
+            ],
+            "headers": {
+                "Accept-Encoding": "br, gzip, deflate"
+            }
+        }
+    ]
+}
