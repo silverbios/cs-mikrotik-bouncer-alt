@@ -1,0 +1,4 @@
+This file prevents Github Pages to automatically trigger 'pages-build-deployment'
+We use static content from other github action.
+
+See [docs at the very top](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
