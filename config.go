@@ -242,7 +242,7 @@ func initConfig() {
 	useMaxTTL = viper.GetBool("use_max_ttl")
 
 	viper.BindEnv("default_ttl_max") //nolint:errcheck
-	viper.SetDefault("default_ttl_max", "24h")
+	viper.SetDefault("default_ttl_max", "4h")
 	maxTTL = viper.GetDuration("default_ttl_max")
 	maxTTLD, err := time.ParseDuration(maxTTL.String())
 	if err != nil {
