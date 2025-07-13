@@ -1,6 +1,6 @@
 # CrowdSec MikroTik Bouncer Alternative
 
-![MikroTik plus CrowdSec](static/mikrotik_plus_crowdsec_small_800.png)
+![MikroTik plus CrowdSec](./docs/static/mikrotik_plus_crowdsec_small_800.png)
 
 This project is not affiliated in any way with CrowdSec nor MikroTik,
 use at your own risk.
@@ -16,5 +16,7 @@ to avoid confusion with the original repo and related integrations.
 
 Notice it works differently, some elements are common in the config, so the migration is quite easy,
 but make sure to read carefully this readme file for more details.
+
+# Documentation
 
 Please see [official docs](https://nvtkaszpir.github.io/cs-mikrotik-bouncer-alt) for more details.
