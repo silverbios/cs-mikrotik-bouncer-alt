@@ -1,0 +1,71 @@
+---
+site_name: "cs-mikrotik-bouncer-alt"
+site_url: "https://nvtkaszpir.github.io/cs-mikrotik-bouncer-alt"
+repo_url: "https://github.com/nvtkaszpir/cs-mikrotik-bouncer-alt"
+
+theme:
+  name: material
+  features:
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+  palette:
+    primary: black
+  logo: static/mikrotik_plus_crowdsec_small_800.png
+
+extra:
+  analytics:
+    provider: google
+    property: G-M6QCR53644
+
+extra_css:
+  - css/extra.css
+
+plugins:
+  - git-revision-date-localized:
+      type: custom
+      custom_format: "%Y-%m-%d %H:%M:%S %z (UTC)"
+      timezone: Europe/Warsaw
+  - search
+  - mermaid2
+  - tags
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      preserve_tabs: true
+      custom_fences:
+        # Mermaid diagrams
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
+
+nav:
+  - General Info:
+      - About: index.md
+      - Features: features.md
+      - Known Limitations: known.limitations.md
+      - Comparison: comparison.md
+      - To Do: todo.md
+
+  - Configuration:
+      - Requirements: requirements.md
+      - Mikrotik config: config.mikrotik.md
+      - Bouncer config: config.bouncer.md
+
+  - Deployment:
+      - Deploy: deploy.md
+      - Observability: observability.md
+      - Troubleshooting: troubleshooting.md
+      - Tuning: tuning.md
+
+  - Development: develop.md

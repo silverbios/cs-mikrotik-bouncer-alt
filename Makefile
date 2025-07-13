@@ -20,7 +20,6 @@ debug: build ## run debug locally, loads env vars from .env
 full: build ## run full setup locally, loads env vars from .env.full
 	export $$(cat .env.full | xargs) && ./cs-mikrotik-bouncer-alt 2>&1| tee  out-$$(date +"%Y-%m-%d_%H-%M").log
 
-
 .PHONY: image
 image: ## build images
 	ko build -B -t  $(GIT_COMMIT) --platform=linux/amd64,linux/arm64,linux/arm
@@ -42,3 +41,12 @@ update: ## update golang deps
 .PHONY: build
 build: ## build binary into ./cs-mikrotik-bouncer-alt
 	go build -o ./cs-mikrotik-bouncer-alt
+
+.PHONY: clean
+clean: ## delete log files and built binary
+	rm -rf *.log
+	rm -rf ./cs-mikrotik-bouncer-alt
+
+.PHONY: docs
+docs: ## run mkdocs serve
+	mkdocs serve
