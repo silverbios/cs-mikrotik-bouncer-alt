@@ -29,6 +29,7 @@ var (
 	},
 		[]string{"proto", "func", "operation"},
 	)
+
 	metricTTLTruncated = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "truncated_ttl_total",
 		Help: "Total number of decisions processed which had effective ttl set to default_ttl_max",
@@ -66,6 +67,51 @@ var (
 	)
 )
 
+// intitMetrics initializes metrics with zero values so that they are available in the graphs
+// thus grafana dashboard is not empty
+func intitMetrics() {
+
+	if useIPV4 {
+		intitMetricsProto("ip")
+	}
+
+	if useIPV6 {
+		intitMetricsProto("ipv6")
+	}
+	mikrotikClient := []string{"connect", "disconnect"}
+	for _, m := range mikrotikClient {
+		metricMikrotikClient.WithLabelValues(m, "error").Add(0)
+		metricMikrotikClient.WithLabelValues(m, "success").Add(0)
+	}
+}
+
+// intitMetricsProto for given protocol such as ip or ipv6
+func intitMetricsProto(proto string) {
+	add := []string{"insert", "skip", "update_equal", "update_shorten"}
+	for _, v := range add {
+		metricDecision.WithLabelValues(proto, "add", v).Add(0)
+	}
+
+	remove := []string{"no_op", "remove", "skip"}
+	for _, v := range remove {
+		metricDecision.WithLabelValues(proto, "remove", v).Add(0)
+	}
+
+	metricTTLTruncated.WithLabelValues(proto, "false").Add(0)
+	metricTTLTruncated.WithLabelValues(proto, "true").Add(0)
+	metricPermBans.WithLabelValues(proto).Add(0)
+
+	metricMikrotikCmd.WithLabelValues(proto, "address_list", "add", "error").Add(0)
+	metricMikrotikCmd.WithLabelValues(proto, "address_list", "add", "success").Add(0)
+
+	modes := []string{"filter", "raw"}
+	for _, mode := range modes {
+		metricMikrotikCmd.WithLabelValues(proto, mode, "set", "error").Add(0)
+		metricMikrotikCmd.WithLabelValues(proto, mode, "set", "success").Add(0)
+	}
+}
+
+// recordMetrics generates metrics from metricTTLCacheStats in a loop
 func recordMetrics(mal *mikrotikAddrList) {
 	go func() {
 		for {
