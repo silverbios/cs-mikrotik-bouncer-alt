@@ -39,20 +39,20 @@ var (
 
 	// set to true if you want to use maxTTL
 	useMaxTTL bool
-	
+
 	listNameFormat string // "static" or "dynamic" option for Addresslist name
 
-	// enableFirewallFilter bool   // enable updating firewall filter rules
-	// srcFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for source rules
-	// srcFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for source rules
-	// dstFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for destination rules
-	// dstFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for destination rules
+	enableFirewallFilter bool   // enable updating firewall filter rules
+	srcFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for source rules
+	srcFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for source rules
+	dstFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for destination rules
+	dstFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for destination rules
 
-	// enableFirewallRaw bool   // enable updating firewall raw rules
-	// srcRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for source rules
-	// srcRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for source rules
-	// dstRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for destination rules
-	// dstRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for destination rules
+	enableFirewallRaw bool   // enable updating firewall raw rules
+	srcRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for source rules
+	srcRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for source rules
+	dstRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for destination rules
+	dstRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for destination rules
 
 	logLevel    string // 0=debug, 1=info
 	metricsAddr string // prometheus listen address
