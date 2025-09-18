@@ -39,8 +39,8 @@ var (
 
 	// set to true if you want to use maxTTL
 	useMaxTTL bool
-
-	listName Format string // "static" or "dynamic" option for Addresslist name
+	
+	listNameFormat string // "static" or "dynamic" option for Addresslist name
 
 	// enableFirewallFilter bool   // enable updating firewall filter rules
 	// srcFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for source rules
