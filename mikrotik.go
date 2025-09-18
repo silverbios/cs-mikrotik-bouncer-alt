@@ -53,7 +53,8 @@ func runMikrotikCommands(mal *mikrotikAddrList) {
 	defer runMikrotikCommandsMetric(lockWaitStart)
 
 	// TODO: allow defining custom format of target address-list name
-	listName := fmt.Sprintf("%s_%s", addressList, time.Now().Format("2006-01-02_15-04-05"))
+	//listName := fmt.Sprintf("%s_%s", addressList, time.Now().Format("2006-01-02_15-04-05"))
+	listName := getListName()
 	var err error
 	var conn *routeros.Client
 	conn, err = mikrotikConnect()

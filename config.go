@@ -40,17 +40,19 @@ var (
 	// set to true if you want to use maxTTL
 	useMaxTTL bool
 
-	enableFirewallFilter bool   // enable updating firewall filter rules
-	srcFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for source rules
-	srcFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for source rules
-	dstFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for destination rules
-	dstFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for destination rules
+	listName Format string // "static" or "dynamic" option for Addresslist name
 
-	enableFirewallRaw bool   // enable updating firewall raw rules
-	srcRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for source rules
-	srcRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for source rules
-	dstRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for destination rules
-	dstRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for destination rules
+	// enableFirewallFilter bool   // enable updating firewall filter rules
+	// srcFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for source rules
+	// srcFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for source rules
+	// dstFilterRuleIdsIPv4 string // comma separated firewall filter rule ids for IPv4 for destination rules
+	// dstFilterRuleIdsIPv6 string // comma separated firewall filter rule ids for IPv6 for destination rules
+
+	// enableFirewallRaw bool   // enable updating firewall raw rules
+	// srcRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for source rules
+	// srcRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for source rules
+	// dstRawRuleIdsIPv4 string // comma separated firewall raw rule ids for IPv4 for destination rules
+	// dstRawRuleIdsIPv6 string // comma separated firewall raw rule ids for IPv6 for destination rules
 
 	logLevel    string // 0=debug, 1=info
 	metricsAddr string // prometheus listen address
@@ -146,6 +148,14 @@ func initConfig() {
 	viper.BindEnv("mikrotik_firewall_raw_enable") //nolint:errcheck
 	viper.SetDefault("mikrotik_firewall_raw_enable", "true")
 	enableFirewallRaw = viper.GetBool("mikrotik_firewall_raw_enable")
+
+	viper.BindEnv("mikrotik_address_list_name_format") //nolint:errcheck
+	viper.SetDefault("mikrotik_address_list_name_format", "dynamic")
+
+	listNameFormat = viper.GetString("mikrotik_address_list_name_format")
+	if listNameFormat != "static" && listNameFormat != "dynamic" {
+		log.Fatal().Str("func", "config").Msg("mikrotik_address_list_name_format must be 'static' or 'dynamic'")
+	}
 
 	viper.BindEnv("mikrotik_address_list") //nolint:errcheck
 	viper.SetDefault("mikrotik_address_list", "crowdsec")
@@ -338,4 +348,11 @@ func cfgValidateFirewall(name string) string {
 	}
 
 	return value
+
+	func getListName() string {
+	if listNameFormat == "static" {
+		return addressList
+	}
+	return fmt.Sprintf("%s_%s", addressList, time.Now().Format("2006-01-02_15-04-05"))
+}
 }
