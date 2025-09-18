@@ -348,11 +348,11 @@ func cfgValidateFirewall(name string) string {
 	}
 
 	return value
+}
 
-	func getListName() string {
+func getListName() string {
 	if listNameFormat == "static" {
 		return addressList
 	}
 	return fmt.Sprintf("%s_%s", addressList, time.Now().Format("2006-01-02_15-04-05"))
-}
 }
