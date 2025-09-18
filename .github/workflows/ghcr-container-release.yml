@@ -17,7 +17,7 @@ permissions:
 env:
   BUILDKIT_PROGRESS: plain
   IMAGE_NAME: ${{ github.repository }}
-  BASE_VERSION: v0.1 #temporary
+  BASE_VERSION: v0.2 #temporary
 
 jobs:
   build:
